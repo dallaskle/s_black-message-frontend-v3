@@ -96,20 +96,22 @@ export function Message({ message }: MessageProps) {
       
       {/* Reactions */}
       <div className="mt-2 flex flex-wrap gap-2">
-        {message?.reactions ? Object.entries(message.reactions).map(([emoji, count]) => (
-          <button
-            key={emoji}
-            onClick={() => handleReaction(emoji)}
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm
-              ${message.userReactions.includes(emoji)
-                ? 'bg-accent-primary/20 text-text-primary'
-                : 'bg-background-secondary text-text-secondary hover:bg-background-secondary/80'
-              }`}
-          >
-            <span>{emoji}</span>
-            <span>{count}</span>
-          </button>
-        )) : (
+        {message.reactions && Object.entries(message.reactions).length > 0 ? (
+          Object.entries(message.reactions).map(([emoji, count]) => (
+            <button
+              key={emoji}
+              onClick={() => handleReaction(emoji)}
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm
+                ${message.userReactions?.includes(emoji)
+                  ? 'bg-accent-primary/20 text-text-primary'
+                  : 'bg-background-secondary text-text-secondary hover:bg-background-secondary/80'
+                }`}
+            >
+              <span>{emoji}</span>
+              <span>{count}</span>
+            </button>
+          ))
+        ) : (
           <span className="text-text-secondary">No reactions yet</span>
         )}
         

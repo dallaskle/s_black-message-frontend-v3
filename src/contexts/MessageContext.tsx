@@ -76,7 +76,7 @@ export function MessageProvider({ children }: { children: ReactNode }) {
       const messageWithReactions = {
         ...newMessage,
         reactions: {},
-        userReactions: []
+        userReactions: [] as string[]
       };
       
       setChannelMessages(prev => ({
@@ -128,7 +128,9 @@ export function MessageProvider({ children }: { children: ReactNode }) {
       const message = messages.find(m => m.id === messageId);
       if (!message) return;
 
-      const hasReacted = message.userReactions.includes(emoji);
+      // Initialize userReactions if undefined
+      const userReactions = message.userReactions || [];
+      const hasReacted = userReactions.includes(emoji);
 
       if (hasReacted) {
         await reactionApi.removeReaction(currentChannel.id, messageId, emoji);
@@ -141,16 +143,17 @@ export function MessageProvider({ children }: { children: ReactNode }) {
         ...prev,
         [currentChannel.id]: prev[currentChannel.id].map(msg => {
           if (msg.id === messageId) {
-            const newCount = (msg.reactions[emoji] || 0) + (hasReacted ? -1 : 1);
+            const reactions = msg.reactions || {};
+            const newCount = (reactions[emoji] || 0) + (hasReacted ? -1 : 1);
             const newUserReactions = hasReacted
-              ? msg.userReactions.filter(e => e !== emoji)
-              : [...msg.userReactions, emoji];
+              ? userReactions.filter(e => e !== emoji)
+              : [...userReactions, emoji];
 
             return {
               ...msg,
               reactions: {
-                ...msg.reactions,
-                [emoji]: newCount
+                ...reactions,
+                [emoji]: Math.max(0, newCount) // Ensure count doesn't go below 0
               },
               userReactions: newUserReactions
             };
