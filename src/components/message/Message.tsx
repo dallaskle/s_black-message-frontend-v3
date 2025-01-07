@@ -103,6 +103,12 @@ export function Message({ message, onThreadClick }: MessageProps) {
         </div>
         <div className="opacity-0 group-hover:opacity-100 flex gap-2">
           <button
+            onClick={() => onThreadClick?.(message.id)}
+            className="text-sm text-text-secondary hover:text-text-primary"
+          >
+            Reply
+          </button>
+          <button
             onClick={() => setIsEditing(true)}
             className="text-sm text-text-secondary hover:text-text-primary"
           >

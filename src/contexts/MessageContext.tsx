@@ -73,6 +73,7 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       user_id: 'current-user', // You'll need to get this from your auth context
+      name: 'User',
       reactions: {},
       userReactions: []
     };
