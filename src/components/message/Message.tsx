@@ -92,8 +92,7 @@ export function Message({ message }: MessageProps) {
           </button>
         </div>
       </div>
-      <p className="mt-1 text-text-primary whitespace-pre-wrap">{message.content}</p>
-      
+      <p className="mt-1 text-text-primary whitespace-pre-wrap font-light">{message.content}</p>
       {/* Reactions */}
       <div className="mt-2 flex flex-wrap gap-2">
         {message.reactions && Object.entries(message.reactions).length > 0 ? (
