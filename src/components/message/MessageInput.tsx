@@ -30,6 +30,12 @@ export function MessageInput() {
           type="text"
           value={content}
           onChange={(e) => setContent(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey && content.trim()) {
+              e.preventDefault();
+              handleSubmit(e);
+            }
+          }}
           placeholder={`Message #${currentChannel.name}`}
           className="flex-1 bg-background-primary border border-text-secondary/20 rounded-lg 
             px-4 py-2 text-text-primary placeholder:text-text-secondary focus:outline-none 
