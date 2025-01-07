@@ -9,18 +9,12 @@ import { MessageProvider } from '../../contexts/MessageContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useChannel } from '../../contexts/ChannelContext';
 import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
-  const navigate = useNavigate();
   const { currentWorkspace } = useWorkspace();
   const { currentChannel } = useChannel();
-
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    navigate('/login');
-  };
 
   const getHeaderTitle = () => {
     if (currentChannel) {
@@ -57,10 +51,38 @@ function DashboardHeader() {
     <div className="p-4 border-b border-text-secondary/10">
       <div className="flex justify-between items-center">
         {getHeaderTitle()}
+      </div>
+    </div>
+  );
+}
+
+function UserInfo() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    navigate('/login');
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="p-4 border-t border-text-secondary/10">
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <div className="text-sm font-medium text-text-primary">
+            {user.name}
+          </div>
+          <div className="text-xs text-text-secondary truncate">
+            {user.email}
+          </div>
+        </div>
         <Button 
           variant="secondary" 
           onClick={handleLogout}
-          className="px-6"
+          className="w-full text-sm"
         >
           Logout
         </Button>
@@ -92,6 +114,7 @@ export function DashboardPage() {
                   <WorkspaceList />
                 </div>
               </div>
+              <UserInfo />
               {/* Resize Handle */}
               <div 
                 className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
