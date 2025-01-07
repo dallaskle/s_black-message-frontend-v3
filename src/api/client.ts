@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { authApi } from './auth';
+//import { authApi } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
@@ -9,7 +9,7 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
+/*
 // Add auth token to requests if available
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
@@ -39,11 +39,15 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        // If refresh fails, redirect to login
-        window.location.href = '/login';
+        // If refresh fails, check current location before redirecting
+        console.error('Token refresh failed:', refreshError);
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
     }
 
     return Promise.reject(error);
   }
 ); 
+*/
