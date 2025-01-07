@@ -1,11 +1,21 @@
 import { useMessage } from '../../contexts/MessageContext';
 import { useChannel } from '../../contexts/ChannelContext';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
 
 export function MessageList() {
   const { messages, isLoading, error } = useMessage();
   const { currentChannel } = useChannel();
+  const { currentWorkspace } = useWorkspace();
+
+  if (!currentWorkspace) {
+    return (
+      <div className="p-4 text-text-secondary">
+        Select a workspace to view messages
+      </div>
+    );
+  }
 
   if (!currentChannel) {
     return (

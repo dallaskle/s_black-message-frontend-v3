@@ -6,9 +6,14 @@ import { MessageList } from '../../components/message/MessageList';
 import { WorkspaceProvider } from '../../contexts/WorkspaceContext';
 import { ChannelProvider } from '../../contexts/ChannelContext';
 import { MessageProvider } from '../../contexts/MessageContext';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useChannel } from '../../contexts/ChannelContext';
 
-export function DashboardPage() {
+// Create a separate header component for better organization
+function DashboardHeader() {
   const navigate = useNavigate();
+  const { currentWorkspace } = useWorkspace();
+  const { currentChannel } = useChannel();
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
@@ -16,6 +21,54 @@ export function DashboardPage() {
     navigate('/login');
   };
 
+  const getHeaderTitle = () => {
+    if (currentChannel) {
+      return (
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">
+            # {currentChannel.name}
+          </h1>
+          {currentWorkspace && (
+            <p className="text-sm text-text-secondary">
+              {currentWorkspace.name}
+            </p>
+          )}
+        </div>
+      );
+    }
+    
+    if (currentWorkspace) {
+      return (
+        <h1 className="text-2xl font-bold text-text-primary">
+          {currentWorkspace.name}
+        </h1>
+      );
+    }
+
+    return (
+      <h1 className="text-2xl font-bold text-text-primary">
+        Select a Workspace
+      </h1>
+    );
+  };
+
+  return (
+    <div className="p-4 border-b border-text-secondary/10">
+      <div className="flex justify-between items-center">
+        {getHeaderTitle()}
+        <Button 
+          variant="secondary" 
+          onClick={handleLogout}
+          className="px-6"
+        >
+          Logout
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function DashboardPage() {
   return (
     <WorkspaceProvider>
       <ChannelProvider>
@@ -33,19 +86,7 @@ export function DashboardPage() {
 
             {/* Main content */}
             <div className="flex-1 flex flex-col">
-              <div className="p-4 border-b border-text-secondary/10">
-                <div className="flex justify-between items-center">
-                  <h1 className="text-2xl font-bold text-text-primary">Dashboard</h1>
-                  <Button 
-                    variant="secondary" 
-                    onClick={handleLogout}
-                    className="px-6"
-                  >
-                    Logout
-                  </Button>
-                </div>
-              </div>
-              
+              <DashboardHeader />
               <MessageList />
             </div>
           </div>

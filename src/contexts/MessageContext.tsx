@@ -26,11 +26,26 @@ export function MessageProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Clear messages when workspace changes
   useEffect(() => {
-    if (!currentChannel) return;
+    setChannelMessages({});
+  }, [currentChannel?.workspace_id]);
+
+  // Modify the channel change effect to clear messages first
+  useEffect(() => {
+    if (!currentChannel) {
+      setChannelMessages({}); // Clear messages when no channel is selected
+      return;
+    }
 
     const fetchMessages = async () => {
       setIsLoading(true);
+      // Clear existing messages for this channel before fetching
+      setChannelMessages(prev => ({
+        ...prev,
+        [currentChannel.id]: [] // Clear messages for this channel
+      }));
+      
       try {
         const data = await messageApi.getChannelMessages(currentChannel.id);
         setChannelMessages(prev => ({

@@ -61,6 +61,13 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
     fetchChannels();
   }, [currentWorkspace?.id]);
 
+  // Reset current channel when workspace changes
+  useEffect(() => {
+    setCurrentChannel(null);
+    // Clear workspace channels cache when workspace changes
+    setWorkspaceChannels({});
+  }, [currentWorkspace?.id]);
+
   // Get current workspace's channels
   const channels = currentWorkspace 
     ? workspaceChannels[currentWorkspace.id] || []
