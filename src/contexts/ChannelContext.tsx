@@ -13,6 +13,7 @@ interface ChannelContextType {
   setCurrentChannel: (channel: Channel | null) => void;
   isLoading: boolean;
   error: string | null;
+  refreshChannels: () => Promise<void>;
 }
 
 const ChannelContext = createContext<ChannelContextType | undefined>(undefined);
@@ -24,41 +25,32 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch channels when workspace changes
+  const refreshChannels = async () => {
+    if (!currentWorkspace) return;
+    
+    setIsLoading(true);
+    try {
+      const data = await channelApi.getWorkspaceChannels(currentWorkspace.id);
+      setWorkspaceChannels(prev => ({
+        ...prev,
+        [currentWorkspace.id]: data
+      }));
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch channels');
+      console.error('Error fetching channels:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial fetch channels when workspace changes
   useEffect(() => {
     if (!currentWorkspace) {
       return;
     }
 
-    const fetchChannels = async () => {
-      // If we already have channels for this workspace, don't fetch again
-      if (workspaceChannels[currentWorkspace.id]) {
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        const data = await channelApi.getWorkspaceChannels(currentWorkspace.id);
-        setWorkspaceChannels(prev => ({
-          ...prev,
-          [currentWorkspace.id]: data
-        }));
-        
-        // Auto-select first channel if none selected
-        if (data.length > 0 && !currentChannel) {
-          setCurrentChannel(data[0]);
-        }
-        
-        setError(null);
-      } catch (err) {
-        setError('Failed to fetch channels');
-        console.error('Error fetching channels:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchChannels();
+    refreshChannels();
   }, [currentWorkspace?.id]);
 
   // Reset current channel when workspace changes
@@ -81,6 +73,7 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
         setCurrentChannel,
         isLoading,
         error,
+        refreshChannels,
       }}
     >
       {children}
