@@ -101,7 +101,7 @@ export function Message({ message, onThreadClick }: MessageProps) {
             {new Date(message.created_at).toLocaleTimeString()}
           </span>
         </div>
-        <div className="opacity-0 group-hover:opacity-100 flex gap-2">
+        <div className="hidden group-hover:flex gap-2">
           <button
             onClick={() => onThreadClick?.(message.id)}
             className="text-sm text-text-secondary hover:text-text-primary"
