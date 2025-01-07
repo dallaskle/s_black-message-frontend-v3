@@ -8,6 +8,7 @@ import { ChannelProvider } from '../../contexts/ChannelContext';
 import { MessageProvider } from '../../contexts/MessageContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useChannel } from '../../contexts/ChannelContext';
+import { useState } from 'react';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -69,19 +70,94 @@ function DashboardHeader() {
 }
 
 export function DashboardPage() {
+  const [workspaceWidth, setWorkspaceWidth] = useState(240);
+  const [channelWidth, setChannelWidth] = useState(240);
+
   return (
     <WorkspaceProvider>
       <ChannelProvider>
         <MessageProvider>
           <div className="min-h-screen bg-background-primary flex">
             {/* Workspace List */}
-            <div className="w-1/4 bg-background-secondary border-r border-text-secondary/10 p-4">
-              <WorkspaceList />
+            <div 
+              className="relative bg-background-secondary border-r border-text-secondary/10"
+              style={{ 
+                width: `${workspaceWidth}px`,
+                minWidth: '180px',
+                maxWidth: '400px'
+              }}
+            >
+              <div className="p-4 overflow-x-hidden">
+                <WorkspaceList />
+              </div>
+              {/* Wider Resize Handle */}
+              <div 
+                className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
+                style={{ padding: '0 6px' }}
+                onMouseDown={(e) => {
+                  const startX = e.clientX;
+                  const startWidth = workspaceWidth;
+
+                  const handleMouseMove = (moveEvent: MouseEvent) => {
+                    const newWidth = startWidth + (moveEvent.clientX - startX);
+                    if (newWidth >= 180 && newWidth <= 400) {
+                      setWorkspaceWidth(newWidth);
+                    }
+                  };
+
+                  const handleMouseUp = () => {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                  };
+
+                  document.addEventListener('mousemove', handleMouseMove);
+                  document.addEventListener('mouseup', handleMouseUp);
+                }}
+              >
+                {/* Visual indicator for the handle */}
+                <div className="h-full w-[2px] bg-text-secondary/10 group-hover:bg-accent-primary/50 group-active:bg-accent-primary" />
+              </div>
             </div>
 
             {/* Channel List */}
-            <div className="w-1/4 bg-background-secondary/50 border-r border-text-secondary/10 p-4">
-              <ChannelList />
+            <div 
+              className="relative bg-background-secondary/50 border-r border-text-secondary/10"
+              style={{ 
+                width: `${channelWidth}px`,
+                minWidth: '180px',
+                maxWidth: '400px'
+              }}
+            >
+              <div className="p-4 overflow-x-hidden">
+                <ChannelList />
+              </div>
+              {/* Wider Resize Handle */}
+              <div 
+                className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
+                style={{ padding: '0 6px' }}
+                onMouseDown={(e) => {
+                  const startX = e.clientX;
+                  const startWidth = channelWidth;
+
+                  const handleMouseMove = (moveEvent: MouseEvent) => {
+                    const newWidth = startWidth + (moveEvent.clientX - startX);
+                    if (newWidth >= 180 && newWidth <= 400) {
+                      setChannelWidth(newWidth);
+                    }
+                  };
+
+                  const handleMouseUp = () => {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                  };
+
+                  document.addEventListener('mousemove', handleMouseMove);
+                  document.addEventListener('mouseup', handleMouseUp);
+                }}
+              >
+                {/* Visual indicator for the handle */}
+                <div className="h-full w-[2px] bg-text-secondary/10 group-hover:bg-accent-primary/50 group-active:bg-accent-primary" />
+              </div>
             </div>
 
             {/* Main content */}
