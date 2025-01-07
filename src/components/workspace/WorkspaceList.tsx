@@ -1,6 +1,5 @@
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import AddWorkspaceModal from './AddWorkspaceModal';
-import { CreateWorkspace } from './CreateWorkspace';
 
 export function WorkspaceList() {
   const { workspaces, currentWorkspace, setCurrentWorkspace, isLoading, error } = useWorkspace();
@@ -55,7 +54,6 @@ export function WorkspaceList() {
         ))}
       </ul>
       <AddWorkspaceModal />
-      
     </div>
   );
 } 

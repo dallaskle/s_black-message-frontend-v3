@@ -6,8 +6,10 @@ interface WorkspaceContextType {
   workspaces: Workspace[];
   currentWorkspace: Workspace | null;
   setCurrentWorkspace: (workspace: Workspace) => void;
+  setCurrentWorkspaceByUrl: (workspace_url: string) => void;
   isLoading: boolean;
   error: string | null;
+  refreshWorkspaces: () => Promise<void>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -18,29 +20,37 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchWorkspaces = async () => {
-      try {
-        const data = await workspaceApi.getUserWorkspaces();
-        console.log(data);
-        setWorkspaces(data);
-        
-        // Auto-select the first workspace if available
-        if (data.length > 0 && !currentWorkspace) {
-          setCurrentWorkspace(data[0]);
-        }
-        
-        setError(null);
-      } catch (err) {
-        setError('Failed to fetch workspaces');
-        console.error('Error fetching workspaces:', err);
-      } finally {
-        setIsLoading(false);
+  const refreshWorkspaces = async () => {
+    setIsLoading(true);
+    try {
+      const data = await workspaceApi.getUserWorkspaces();
+      setWorkspaces(data);
+      
+      // Only set the first workspace if we have no workspaces loaded yet
+      if (data.length > 0 && workspaces.length === 0 && !currentWorkspace) {
+        setCurrentWorkspace(data[0]);
       }
-    };
+      
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch workspaces');
+      console.error('Error fetching workspaces:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchWorkspaces();
-  }, []);
+  // Initial load
+  useEffect(() => {
+    refreshWorkspaces();
+  }, []); // Remove currentWorkspace from dependencies
+
+  const setCurrentWorkspaceByUrl = (workspace_url: string) => {
+    const workspace = workspaces.find(w => w.workspace_url === workspace_url);
+    if (workspace) {
+      setCurrentWorkspace(workspace);
+    }
+  };
 
   return (
     <WorkspaceContext.Provider
@@ -48,8 +58,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         workspaces,
         currentWorkspace,
         setCurrentWorkspace,
+        setCurrentWorkspaceByUrl,
         isLoading,
         error,
+        refreshWorkspaces,
       }}
     >
       {children}
