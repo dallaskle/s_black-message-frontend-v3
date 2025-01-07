@@ -158,18 +158,72 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
 
       const hasReacted = message.userReactions?.includes(emoji);
       
+      // Optimistically update the UI
+      setMessages(prev => prev.map(msg => {
+        if (msg.id === messageId) {
+          // Calculate optimistic reaction counts
+          const newReactions = { ...msg.reactions };
+          newReactions[emoji] = (newReactions[emoji] || 0) + (hasReacted ? -1 : 1);
+          if (newReactions[emoji] <= 0) {
+            delete newReactions[emoji];
+          }
+
+          // Update user reactions
+          const newUserReactions = hasReacted
+            ? msg.userReactions.filter(r => r !== emoji)
+            : [...(msg.userReactions || []), emoji];
+
+          return {
+            ...msg,
+            reactions: newReactions,
+            userReactions: newUserReactions
+          };
+        }
+        // Also update the message if it exists in any thread replies
+        if (msg.replies) {
+          return {
+            ...msg,
+            replies: msg.replies.map(reply => {
+              if (reply.id === messageId) {
+                // Calculate optimistic reaction counts for reply
+                const newReactions = { ...reply.reactions };
+                newReactions[emoji] = (newReactions[emoji] || 0) + (hasReacted ? -1 : 1);
+                if (newReactions[emoji] <= 0) {
+                  delete newReactions[emoji];
+                }
+
+                // Update user reactions for reply
+                const newUserReactions = hasReacted
+                  ? reply.userReactions.filter(r => r !== emoji)
+                  : [...(reply.userReactions || []), emoji];
+
+                return {
+                  ...reply,
+                  reactions: newReactions,
+                  userReactions: newUserReactions
+                };
+              }
+              return reply;
+            })
+          };
+        }
+        return msg;
+      }));
+
+      // Make API call
       if (hasReacted) {
         await reactionApi.removeReaction(message.channel_id, messageId, emoji);
       } else {
         await reactionApi.addReaction(message.channel_id, messageId, emoji);
       }
 
-      // Get updated reaction counts
-      const reactionCounts = await reactionApi.getReactionCounts(message.channel_id, messageId);
-      // Get updated user reactions
-      const userReactions = await reactionApi.getMessageReactions(message.channel_id, messageId);
+      // Get actual updated data from server
+      const [reactionCounts, userReactions] = await Promise.all([
+        reactionApi.getReactionCounts(message.channel_id, messageId),
+        reactionApi.getMessageReactions(message.channel_id, messageId)
+      ]);
 
-      // Update both the main messages and any thread replies
+      // Update with actual server data
       setMessages(prev => prev.map(msg => {
         if (msg.id === messageId) {
           return {
@@ -192,6 +246,30 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
         return msg;
       }));
     } catch (err) {
+      // Revert optimistic update on error by refetching the current state
+      if (message) {
+        const [reactionCounts, userReactions] = await Promise.all([
+          reactionApi.getReactionCounts(message.channel_id, messageId),
+          reactionApi.getMessageReactions(message.channel_id, messageId)
+        ]);
+
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === messageId) {
+            return { ...msg, reactions: reactionCounts, userReactions };
+          }
+          if (msg.replies) {
+            return {
+              ...msg,
+              replies: msg.replies.map(reply =>
+                reply.id === messageId
+                  ? { ...reply, reactions: reactionCounts, userReactions }
+                  : reply
+              )
+            };
+          }
+          return msg;
+        }));
+      }
       setError(err instanceof Error ? err.message : 'Failed to toggle reaction');
     }
   }, [messages]);

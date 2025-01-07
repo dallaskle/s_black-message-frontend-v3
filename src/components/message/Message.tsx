@@ -35,8 +35,9 @@ export function Message({ message, onThreadClick }: MessageProps) {
 
   const handleReaction = async (emoji: string) => {
     try {
-      await toggleReaction(message.id, emoji);
+      // Close emoji picker immediately
       setShowReactionPicker(false);
+      await toggleReaction(message.id, emoji);
     } catch (err) {
       console.error('Failed to toggle reaction:', err);
     }
