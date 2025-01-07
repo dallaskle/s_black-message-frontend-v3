@@ -1,12 +1,11 @@
-import './App.css'
+import { colors } from './styles/colors';
 
 function App() {
-
   return (
-    <>
-        <div>Hey there!</div>
-    </>
-  )
+    <div style={{ backgroundColor: colors.background.primary }}>
+      <div style={{ color: colors.text.primary }}>Hey there!</div>
+    </div>
+  );
 }
 
-export default App
+export default App;
