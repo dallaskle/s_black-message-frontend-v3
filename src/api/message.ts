@@ -18,6 +18,15 @@ export const messageApi = {
       `/api/channels/${channelId}/messages`,
       { content, parent_message_id: parentMessageId }
     );
+
+    /*if (!data.name) {
+      const { data: userData } = await apiClient.get('/api/users/me');
+      return {
+        ...data,
+        name: userData.name
+      };
+    }*/
+
     return data;
   },
 

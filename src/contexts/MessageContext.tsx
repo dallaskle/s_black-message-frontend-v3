@@ -58,9 +58,15 @@ export function MessageProvider({ children }: { children: ReactNode }) {
     
     try {
       const newMessage = await messageApi.createMessage(currentChannel.id, content);
+      const messageWithReactions = {
+        ...newMessage,
+        reactions: {},
+        userReactions: []
+      };
+      
       setChannelMessages(prev => ({
         ...prev,
-        [currentChannel.id]: [...(prev[currentChannel.id] || []), newMessage]
+        [currentChannel.id]: [...(prev[currentChannel.id] || []), messageWithReactions]
       }));
     } catch (err) {
       console.error('Error sending message:', err);

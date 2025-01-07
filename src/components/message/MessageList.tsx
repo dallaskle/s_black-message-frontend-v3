@@ -1,6 +1,7 @@
 import { useMessage } from '../../contexts/MessageContext';
 import { useChannel } from '../../contexts/ChannelContext';
 import { Message } from './Message';
+import { MessageInput } from './MessageInput';
 
 export function MessageList() {
   const { messages, isLoading, error } = useMessage();
@@ -30,19 +31,20 @@ export function MessageList() {
     );
   }
 
-  if (messages.length === 0) {
-    return (
-      <div className="p-4 text-text-secondary">
-        No messages yet. Start the conversation!
-      </div>
-    );
-  }
-
   return (
-    <div className="flex-1 overflow-y-auto">
-      {messages.map((message) => (
-        <Message key={message.id} message={message} />
-      ))}
+    <div className="flex-1 flex flex-col">
+      <div className="flex-1 overflow-y-auto">
+        {messages.length === 0 ? (
+          <div className="p-4 text-text-secondary">
+            No messages yet. Start the conversation!
+          </div>
+        ) : (
+          messages.map((message) => (
+            <Message key={message.id} message={message} />
+          ))
+        )}
+      </div>
+      <MessageInput />
     </div>
   );
 } 
