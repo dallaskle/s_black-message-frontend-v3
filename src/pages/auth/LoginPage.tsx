@@ -26,6 +26,7 @@ export function LoginPage() {
       const response = await authApi.login(data);
       localStorage.setItem('accessToken', response.session?.access_token || '');
       localStorage.setItem('refreshToken', response.session?.refresh_token || '');
+      localStorage.setItem('userName', response.user.name);
       navigate('/dashboard');
     } catch (err) {
       setError('Invalid credentials');

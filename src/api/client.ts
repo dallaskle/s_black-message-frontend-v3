@@ -1,7 +1,10 @@
 import axios from 'axios';
-//import { authApi } from './auth';
+import { authApi } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
 
 export const apiClient = axios.create({
   baseURL: API_URL,
@@ -9,8 +12,8 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
-/*
-// Add auth token to requests if available
+
+// Add request interceptor
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
   if (token) {
@@ -19,35 +22,47 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle token refresh
+// Add response interceptor
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If error is 401 and we haven't tried to refresh token yet
+    // If error is 401 and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // Wait for the other refresh request
+        return new Promise((resolve) => {
+          refreshSubscribers.push((token: string) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(apiClient(originalRequest));
+          });
+        });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       try {
-        // Attempt to refresh the token
-        const response = await authApi.refreshToken();
+        const data = await authApi.refreshToken();
+        const { access_token } = data.session;
         
-        // Retry the original request with new token
-        if (response.session?.access_token) {
-          originalRequest.headers.Authorization = `Bearer ${response.session.access_token}`;
-          return apiClient(originalRequest);
-        }
+        // Notify subscribers with new token
+        refreshSubscribers.forEach((callback) => callback(access_token));
+        refreshSubscribers = [];
+        
+        return apiClient(originalRequest);
       } catch (refreshError) {
-        // If refresh fails, check current location before redirecting
-        console.error('Token refresh failed:', refreshError);
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
-        }
+        // Clear tokens and redirect to login
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 
     return Promise.reject(error);
   }
-); 
-*/
+);

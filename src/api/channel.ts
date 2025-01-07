@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { Channel, ChannelMember } from '../types/channel';
+import type { Channel } from '../types/channel';
 
 export const channelApi = {
   getWorkspaceChannels: async (workspaceId: string) => {

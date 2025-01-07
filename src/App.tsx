@@ -22,6 +22,9 @@ function App() {
           await authApi.refreshToken();
           console.log('refreshToken success');
           setIsLoading(false);
+          if (window.location.pathname === '/login') {
+            window.location.href = '/dashboard';
+          }
         } catch (error) {
           console.error('Failed to refresh token:', error);
           // Optionally redirect to login if refresh fails
