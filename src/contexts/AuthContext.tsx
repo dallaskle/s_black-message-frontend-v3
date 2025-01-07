@@ -1,5 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi } from '../api/auth';
+import { useWorkspace } from './WorkspaceContext';
+import { useChannel } from './ChannelContext';
+import { useMessage } from './MessageContext';
 
 interface User {
   id: string;
@@ -124,4 +127,20 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+export function useLogout() {
+  const { logout } = useAuth();
+  const { setCurrentWorkspace } = useWorkspace();
+  const { setCurrentChannel } = useChannel();
+  const { setMessages } = useMessage();
+
+  const handleLogout = async () => {
+    await logout();
+    setCurrentWorkspace(null as any);
+    setCurrentChannel(null as any);
+    setMessages([]);
+  };
+
+  return handleLogout;
 }

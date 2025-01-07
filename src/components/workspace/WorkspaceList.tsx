@@ -14,8 +14,9 @@ export function WorkspaceList() {
 
   if (error) {
     return (
-      <div className="p-4 text-accent-error">
+      <div className="p-4 text-text-secondary">
         {error}
+        <AddWorkspaceModal />
       </div>
     );
   }
@@ -24,6 +25,8 @@ export function WorkspaceList() {
     return (
       <div className="p-4 text-text-secondary">
         No workspaces found. Create your first workspace to get started.
+        <div className="mt-4"></div>
+        <AddWorkspaceModal />
       </div>
     );
   }

@@ -9,7 +9,7 @@ import { MessageProvider } from '../../contexts/MessageContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useChannel } from '../../contexts/ChannelContext';
 import { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth, useLogout } from '../../contexts/AuthContext';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -59,10 +59,10 @@ function DashboardHeader() {
 function UserInfo() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const handleLogout = useLogout();
 
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+  const onLogout = async () => {
+    await handleLogout();
     navigate('/login');
   };
 
@@ -81,7 +81,7 @@ function UserInfo() {
         </div>
         <Button 
           variant="secondary" 
-          onClick={handleLogout}
+          onClick={onLogout}
           className="w-full text-sm"
         >
           Logout

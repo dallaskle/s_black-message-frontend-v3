@@ -6,6 +6,7 @@ import { reactionApi } from '../api/reaction';
 
 interface MessageContextType {
   messages: Message[];
+  setMessages: (messages: Message[]) => void;
   isLoading: boolean;
   error: string | null;
   sendMessage: (content: string, parentMessageId?: string) => Promise<void>;
@@ -278,6 +279,7 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
 
   const value = {
     messages,
+    setMessages,
     isLoading,
     error,
     sendMessage,
