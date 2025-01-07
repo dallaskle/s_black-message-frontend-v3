@@ -24,7 +24,7 @@ export function MessageInput() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border-t border-text-secondary/10">
+    <form onSubmit={handleSubmit} className="flex-shrink-0 p-4 border-t border-text-secondary/10 bg-background-primary">
       <div className="flex gap-2">
         <input
           type="text"

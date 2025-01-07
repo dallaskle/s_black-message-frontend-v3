@@ -77,20 +77,22 @@ export function DashboardPage() {
     <WorkspaceProvider>
       <ChannelProvider>
         <MessageProvider>
-          <div className="min-h-screen bg-background-primary flex">
+          <div className="h-screen bg-background-primary flex overflow-hidden">
             {/* Workspace List */}
             <div 
-              className="relative bg-background-secondary border-r border-text-secondary/10"
+              className="relative h-full flex flex-col bg-background-secondary border-r border-text-secondary/10"
               style={{ 
                 width: `${workspaceWidth}px`,
                 minWidth: '180px',
                 maxWidth: '400px'
               }}
             >
-              <div className="p-4 overflow-x-hidden">
-                <WorkspaceList />
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-4">
+                  <WorkspaceList />
+                </div>
               </div>
-              {/* Wider Resize Handle */}
+              {/* Resize Handle */}
               <div 
                 className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
                 style={{ padding: '0 6px' }}
@@ -114,24 +116,25 @@ export function DashboardPage() {
                   document.addEventListener('mouseup', handleMouseUp);
                 }}
               >
-                {/* Visual indicator for the handle */}
                 <div className="h-full w-[2px] bg-text-secondary/10 group-hover:bg-accent-primary/50 group-active:bg-accent-primary" />
               </div>
             </div>
 
             {/* Channel List */}
             <div 
-              className="relative bg-background-secondary/50 border-r border-text-secondary/10"
+              className="relative h-full flex flex-col bg-background-secondary/50 border-r border-text-secondary/10"
               style={{ 
                 width: `${channelWidth}px`,
                 minWidth: '180px',
                 maxWidth: '400px'
               }}
             >
-              <div className="p-4 overflow-x-hidden">
-                <ChannelList />
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-4">
+                  <ChannelList />
+                </div>
               </div>
-              {/* Wider Resize Handle */}
+              {/* Resize Handle */}
               <div 
                 className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
                 style={{ padding: '0 6px' }}
@@ -155,13 +158,12 @@ export function DashboardPage() {
                   document.addEventListener('mouseup', handleMouseUp);
                 }}
               >
-                {/* Visual indicator for the handle */}
                 <div className="h-full w-[2px] bg-text-secondary/10 group-hover:bg-accent-primary/50 group-active:bg-accent-primary" />
               </div>
             </div>
 
             {/* Main content */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
               <DashboardHeader />
               <MessageList />
             </div>
