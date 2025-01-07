@@ -1,19 +1,28 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useMessage } from '../../contexts/MessageContext';
 import { useChannel } from '../../contexts/ChannelContext';
 
-export function MessageInput() {
+interface MessageInputProps {
+  parentMessageId?: string;
+}
+
+export function MessageInput({ parentMessageId }: MessageInputProps) {
   const [content, setContent] = useState('');
   const { sendMessage } = useMessage();
   const { currentChannel } = useChannel();
+
+  useEffect(() => {
+    console.log('MessageInput parentMessageId:', parentMessageId);
+  }, [parentMessageId]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!content.trim() || !currentChannel) return;
 
     try {
-      await sendMessage(content);
-      setContent(''); // Clear input after sending
+      console.log('Sending message with parentMessageId:', parentMessageId);
+      await sendMessage(content, parentMessageId);
+      setContent('');
     } catch (err) {
       console.error('Failed to send message:', err);
     }

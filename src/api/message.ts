@@ -14,9 +14,10 @@ export const messageApi = {
   },
 
   createMessage: async (channelId: string, content: string, parentMessageId?: string) => {
+    console.log('parentMessageId:', parentMessageId);
     const { data } = await apiClient.post<Message>(
       `/api/channels/${channelId}/messages`,
-      { content, parent_message_id: parentMessageId }
+      { content, parentMessageId }
     );
 
     /*if (!data.name) {

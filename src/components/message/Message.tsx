@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useMessage } from '../../contexts/MessageContext';
 import type { Message as MessageType } from '../../types/message';
 
@@ -7,10 +7,11 @@ const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '🤔', '👀'];
 
 interface MessageProps {
   message: MessageType;
+  onThreadClick?: (messageId: string) => void;
 }
 
-export function Message({ message }: MessageProps) {
-  const { updateMessage, deleteMessage, toggleReaction } = useMessage();
+export function Message({ message, onThreadClick }: MessageProps) {
+  const { updateMessage, deleteMessage, toggleReaction, messages } = useMessage();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
@@ -40,6 +41,28 @@ export function Message({ message }: MessageProps) {
       console.error('Failed to toggle reaction:', err);
     }
   };
+
+  // Calculate thread info
+  const threadInfo = useMemo(() => {
+    // Find all replies to this message
+    const replies = messages.filter(m => m.parent_message_id === message.id);
+    if (replies.length === 0) return null;
+
+    // Get the latest reply
+    const lastReply = replies.reduce((latest, reply) => {
+      return new Date(reply.created_at) > new Date(latest.created_at) ? reply : latest;
+    }, replies[0]);
+
+    const lastReplyTime = new Date(lastReply.created_at).toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+
+    return {
+      count: replies.length,
+      lastReplyTime
+    };
+  }, [messages, message.id]);
 
   if (isEditing) {
     return (
@@ -92,7 +115,18 @@ export function Message({ message }: MessageProps) {
           </button>
         </div>
       </div>
-      <p className="mt-1 text-text-primary whitespace-pre-wrap font-light">{message.content}</p>
+      <p className="mt-1 text-text-primary whitespace-pre-wrap font-thin">{message.content}</p>
+      
+      {/* Thread info */}
+      {threadInfo && (
+        <button
+          onClick={() => onThreadClick?.(message.id)}
+          className="mt-2 text-sm text-accent-primary hover:text-accent-primary/90"
+        >
+          {threadInfo.count} {threadInfo.count === 1 ? 'reply' : 'replies'} • Last reply at {threadInfo.lastReplyTime}
+        </button>
+      )}
+
       {/* Reactions */}
       <div className="mt-2 flex flex-wrap gap-2">
         {message.reactions && Object.entries(message.reactions).length > 0 ? (

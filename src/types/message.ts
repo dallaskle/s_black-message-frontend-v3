@@ -9,4 +9,5 @@ export interface Message {
   name: string;
   reactions: { [emoji: string]: number };
   userReactions: string[];
+  replies?: Message[];
 } 
