@@ -71,7 +71,28 @@ export function MessageProvider({ children }: { children: ReactNode }) {
   const sendMessage = async (content: string) => {
     if (!currentChannel) return;
     
+    // Create an optimistic message
+    const optimisticMessage: Message = {
+      id: `temp-${Date.now()}`,
+      content,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      channel_id: currentChannel.id,
+      user_id: 'current-user',
+      reactions: {},
+      userReactions: [],
+      parent_message_id: null,
+      name: 'User'
+    };
+    
+    // Update UI immediately
+    setChannelMessages(prev => ({
+      ...prev,
+      [currentChannel.id]: [...(prev[currentChannel.id] || []), optimisticMessage]
+    }));
+    
     try {
+      // Send to server in background
       const newMessage = await messageApi.createMessage(currentChannel.id, content);
       const messageWithReactions = {
         ...newMessage,
@@ -79,11 +100,19 @@ export function MessageProvider({ children }: { children: ReactNode }) {
         userReactions: [] as string[]
       };
       
+      // Replace optimistic message with real one
       setChannelMessages(prev => ({
         ...prev,
-        [currentChannel.id]: [...(prev[currentChannel.id] || []), messageWithReactions]
+        [currentChannel.id]: prev[currentChannel.id].map(msg => 
+          msg.id === optimisticMessage.id ? messageWithReactions : msg
+        )
       }));
     } catch (err) {
+      // Remove optimistic message if request fails
+      setChannelMessages(prev => ({
+        ...prev,
+        [currentChannel.id]: prev[currentChannel.id].filter(msg => msg.id !== optimisticMessage.id)
+      }));
       console.error('Error sending message:', err);
       throw err;
     }
