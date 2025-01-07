@@ -10,14 +10,14 @@ import { CreateWorkspace } from './CreateWorkspace';
 const AddWorkspaceModal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
-  const [workspaceUrl, setWorkspaceUrl] = useState('');
+  const [workspaceUrl, setWorkspaceUrl] = useState('-workspace.s_black.com');
   const [isUrlManuallyEdited, setIsUrlManuallyEdited] = useState(false);
   const { toast } = useToast();
 
   // Auto-generate URL from name if not manually edited
   useEffect(() => {
     if (!isUrlManuallyEdited) {
-      setWorkspaceUrl(name.toLowerCase().replace(/\s+/g, '-'));
+      setWorkspaceUrl(`${name.toLowerCase().replace(/\s+/g, '-')}-workspace.s_black.com`);
     }
   }, [name, isUrlManuallyEdited]);
 
@@ -45,11 +45,19 @@ const AddWorkspaceModal = () => {
     }
   };
 
+  const resetForm = () => {
+    setName('');
+    setWorkspaceUrl('-workspace.s_black.com');
+    setIsUrlManuallyEdited(false);
+  };
+
   return (
     <>
-      <CreateWorkspace onClick={() => setIsOpen(true)} />
+      <div className="flex justify-center">
+        <CreateWorkspace onClick={() => setIsOpen(true)} />
+      </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-background-primary">
           <DialogHeader>
             <DialogTitle>Create New Workspace</DialogTitle>
           </DialogHeader>
@@ -70,15 +78,21 @@ const AddWorkspaceModal = () => {
                 id="url"
                 value={workspaceUrl}
                 onChange={(e) => {
+                  const inputValue = e.target.value;
                   setIsUrlManuallyEdited(true);
-                  setWorkspaceUrl(e.target.value);
+                  // Ensure the URL ends with .s_black.com
+                  if (!inputValue.endsWith('.s_black.com')) {
+                    setWorkspaceUrl(`${inputValue.replace(/\.s_black\.com$/, '')}.s_black.com`);
+                  } else {
+                    setWorkspaceUrl(inputValue);
+                  }
                 }}
                 placeholder="Enter workspace URL"
                 required
               />
             </div>
             <div className="flex justify-end space-x-2">
-              <Button type="button" onClick={() => setIsOpen(false)}>
+              <Button type="button" onClick={() => { resetForm(); setIsOpen(false); }}>
                 Cancel
               </Button>
               <Button type="submit">
