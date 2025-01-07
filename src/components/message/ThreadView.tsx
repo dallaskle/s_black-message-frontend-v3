@@ -1,7 +1,7 @@
 import { useMessage } from '../../contexts/MessageContext';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useChannel } from '../../contexts/ChannelContext';
 
 interface ThreadViewProps {
@@ -12,19 +12,22 @@ interface ThreadViewProps {
 export function ThreadView({ parentMessageId, onClose }: ThreadViewProps) {
   const { messages } = useMessage();
   const { currentChannel } = useChannel();
+  const threadEndRef = useRef<HTMLDivElement>(null);
 
   const threadMessages = useMemo(() => {
     const parent = messages.find(m => m.id === parentMessageId);
     if (!parent) return [];
     
-    // Get all replies to this message
     const replies = messages.filter(m => m.parent_message_id === parentMessageId);
     
-    // Return parent message followed by replies
     return [parent, ...replies].sort((a, b) => {
       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     });
   }, [messages, parentMessageId]);
+
+  const scrollToBottom = () => {
+    threadEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   if (!currentChannel) return null;
 
@@ -47,13 +50,14 @@ export function ThreadView({ parentMessageId, onClose }: ThreadViewProps) {
             message={message}
           />
         ))}
+        <div ref={threadEndRef} />
       </div>
 
-      <div className="p-4 border-t border-text-secondary/20">
-        <MessageInput 
-          parentMessageId={parentMessageId}
-        />
-      </div>
+      <MessageInput 
+        parentMessageId={parentMessageId}
+        isThread={true}
+        onMessageSent={scrollToBottom}
+      />
     </div>
   );
 } 

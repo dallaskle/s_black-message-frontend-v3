@@ -64,42 +64,69 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
   const sendMessage = useCallback(async (content: string, parentMessageId?: string) => {
     if (!currentChannel?.id) return;
 
-    try {
-      // Create the message with parent_message_id if in a thread
-      const newMessage = await messageApi.createMessage(
-        currentChannel.id, 
-        content,
-        parentMessageId // This is being passed correctly
-      );
+    // Create optimistic message
+    const optimisticMessage = {
+      id: `temp-${Date.now()}`, // temporary ID
+      content,
+      channel_id: currentChannel.id,
+      parent_message_id: parentMessageId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      user_id: 'current-user', // You'll need to get this from your auth context
+      reactions: {},
+      userReactions: []
+    };
+
+    // Optimistically update UI
+    setMessages(prev => {
+      const newMessages = [...prev];
       
+      // Add to main messages array
+      newMessages.push(optimisticMessage);
+      
+      // If this is a thread reply, update the parent's replies
       if (parentMessageId) {
-        // Update messages array to include the new reply
-        setMessages(prev => prev.map(msg => {
+        return newMessages.map(msg => {
           if (msg.id === parentMessageId) {
-            // Add to parent message's replies
             return {
               ...msg,
-              replies: [...(msg.replies || []), newMessage]
-            };
-          }
-          // Also check if this message exists in any other thread's replies
-          if (msg.replies) {
-            return {
-              ...msg,
-              replies: msg.replies.map(reply => 
-                reply.id === parentMessageId
-                  ? { ...reply, replies: [...(reply.replies || []), newMessage] }
-                  : reply
-              )
+              replies: [...(msg.replies || []), optimisticMessage]
             };
           }
           return msg;
-        }));
-      } else {
-        // Add new message to the main messages array
-        setMessages(prev => [...prev, newMessage]);
+        });
       }
+      
+      return newMessages;
+    });
+
+    try {
+      // Make API call
+      const savedMessage = await messageApi.createMessage(
+        currentChannel.id, 
+        content,
+        parentMessageId
+      );
+
+      // Replace optimistic message with saved message
+      setMessages(prev => prev.map(msg => {
+        if (msg.id === optimisticMessage.id) {
+          return savedMessage;
+        }
+        if (msg.id === parentMessageId) {
+          return {
+            ...msg,
+            replies: (msg.replies || []).map(reply => 
+              reply.id === optimisticMessage.id ? savedMessage : reply
+            )
+          };
+        }
+        return msg;
+      }));
+
     } catch (err) {
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
       setError(err instanceof Error ? err.message : 'Failed to send message');
     }
   }, [currentChannel?.id]);

@@ -1,28 +1,31 @@
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useRef } from 'react';
 import { useMessage } from '../../contexts/MessageContext';
 import { useChannel } from '../../contexts/ChannelContext';
 
 interface MessageInputProps {
   parentMessageId?: string;
+  isThread?: boolean;
+  onMessageSent?: () => void;
 }
 
-export function MessageInput({ parentMessageId }: MessageInputProps) {
+export function MessageInput({ parentMessageId, isThread = false, onMessageSent }: MessageInputProps) {
   const [content, setContent] = useState('');
   const { sendMessage } = useMessage();
   const { currentChannel } = useChannel();
-
-  useEffect(() => {
-    console.log('MessageInput parentMessageId:', parentMessageId);
-  }, [parentMessageId]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!content.trim() || !currentChannel) return;
 
     try {
-      console.log('Sending message with parentMessageId:', parentMessageId);
       await sendMessage(content, parentMessageId);
       setContent('');
+      if (onMessageSent) {
+        onMessageSent();
+      }
+      // Focus back on input after sending
+      inputRef.current?.focus();
     } catch (err) {
       console.error('Failed to send message:', err);
     }
@@ -33,9 +36,10 @@ export function MessageInput({ parentMessageId }: MessageInputProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex-shrink-0 p-4 border-t border-text-secondary/10 bg-background-primary">
+    <form onSubmit={handleSubmit} className={`flex-shrink-0 p-4 ${!isThread ? 'border-t' : ''} border-text-secondary/10 bg-background-primary`}>
       <div className="flex gap-2">
         <input
+          ref={inputRef}
           type="text"
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -45,7 +49,7 @@ export function MessageInput({ parentMessageId }: MessageInputProps) {
               handleSubmit(e);
             }
           }}
-          placeholder={`Message #${currentChannel.name}`}
+          placeholder={isThread ? 'Reply in thread...' : `Message #${currentChannel.name}`}
           className="flex-1 bg-background-primary border border-text-secondary/20 rounded-lg 
             px-4 py-2 text-text-primary placeholder:text-text-secondary focus:outline-none 
             focus:border-accent-primary"
@@ -56,7 +60,7 @@ export function MessageInput({ parentMessageId }: MessageInputProps) {
           className="px-4 py-2 bg-accent-primary text-white rounded-lg font-medium
             hover:bg-accent-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Send
+          {isThread ? 'Reply' : 'Send'}
         </button>
       </div>
     </form>
