@@ -3,7 +3,7 @@ import { useChannel } from '../../contexts/ChannelContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 
 // Helper function to get date group label
 const getDateGroup = (date: Date): string => {
@@ -31,6 +31,7 @@ export function MessageList() {
   const { messages, isLoading, error } = useMessage();
   const { currentChannel } = useChannel();
   const { currentWorkspace } = useWorkspace();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Group and sort messages
   const groupedMessages = useMemo(() => {
@@ -57,6 +58,11 @@ export function MessageList() {
     });
 
     return groups;
+  }, [messages]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   if (!currentWorkspace) {
@@ -99,23 +105,26 @@ export function MessageList() {
             No messages yet. Start the conversation!
           </div>
         ) : (
-          groupedMessages.map((group, index) => (
-            <div key={group.label}>
-              <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-text-secondary/20"></div>
+          <>
+            {groupedMessages.map((group, index) => (
+              <div key={group.label}>
+                <div className="relative py-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-text-secondary/20"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="px-2 bg-background-primary text-text-secondary text-sm">
+                      {group.label}
+                    </span>
+                  </div>
                 </div>
-                <div className="relative flex justify-center">
-                  <span className="px-2 bg-background-primary text-text-secondary text-sm">
-                    {group.label}
-                  </span>
-                </div>
+                {group.messages.map((message) => (
+                  <Message key={message.id} message={message} />
+                ))}
               </div>
-              {group.messages.map((message) => (
-                <Message key={message.id} message={message} />
-              ))}
-            </div>
-          ))
+            ))}
+            <div ref={messagesEndRef} />
+          </>
         )}
       </div>
       <MessageInput />
