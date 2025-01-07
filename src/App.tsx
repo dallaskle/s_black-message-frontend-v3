@@ -22,7 +22,7 @@ function App() {
           await authApi.refreshToken();
           console.log('refreshToken success');
           setIsLoading(false);
-          if (window.location.pathname === '/login') {
+          if (window.location.pathname === '/login' || window.location.pathname === '/') {
             window.location.href = '/dashboard';
           }
         } catch (error) {
