@@ -248,10 +248,11 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
       }));
     } catch (err) {
       // Revert optimistic update on error by refetching the current state
-      if (message) {
+      const targetMessage = messages.find(m => m.id === messageId);
+      if (targetMessage) {
         const [reactionCounts, userReactions] = await Promise.all([
-          reactionApi.getReactionCounts(message.channel_id, messageId),
-          reactionApi.getMessageReactions(message.channel_id, messageId)
+          reactionApi.getReactionCounts(targetMessage.channel_id, messageId),
+          reactionApi.getMessageReactions(targetMessage.channel_id, messageId)
         ]);
 
         setMessages(prev => prev.map(msg => {
