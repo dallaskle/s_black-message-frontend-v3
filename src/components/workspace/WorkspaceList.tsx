@@ -44,6 +44,10 @@ export function WorkspaceList() {
               }`}
             >
               {workspace.name}
+              {workspace.workspace_url && 
+                <div className="text-xs text-text-secondary">
+                    {workspace.workspace_url}
+                </div>}
             </button>
           </li>
         ))}
