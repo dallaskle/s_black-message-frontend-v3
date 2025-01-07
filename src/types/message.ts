@@ -6,5 +6,9 @@ export interface Message {
   parent_message_id: string | null;
   created_at: string;
   updated_at: string | null;
-  name: string; // User's display name
+  name: string;
+  reactions: {
+    [emoji: string]: number;  // Emoji to count mapping
+  };
+  userReactions: string[];   // List of emojis the current user has reacted with
 } 

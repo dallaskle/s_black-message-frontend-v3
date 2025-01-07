@@ -2,14 +2,18 @@ import { useState } from 'react';
 import { useMessage } from '../../contexts/MessageContext';
 import type { Message as MessageType } from '../../types/message';
 
+// Common emojis for quick reactions
+const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '🤔', '👀'];
+
 interface MessageProps {
   message: MessageType;
 }
 
 export function Message({ message }: MessageProps) {
-  const { updateMessage, deleteMessage } = useMessage();
+  const { updateMessage, deleteMessage, toggleReaction } = useMessage();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
 
   const handleUpdate = async () => {
     try {
@@ -25,6 +29,15 @@ export function Message({ message }: MessageProps) {
       await deleteMessage(message.id);
     } catch (err) {
       console.error('Failed to delete message:', err);
+    }
+  };
+
+  const handleReaction = async (emoji: string) => {
+    try {
+      await toggleReaction(message.id, emoji);
+      setShowReactionPicker(false);
+    } catch (err) {
+      console.error('Failed to toggle reaction:', err);
     }
   };
 
@@ -80,6 +93,53 @@ export function Message({ message }: MessageProps) {
         </div>
       </div>
       <p className="mt-1 text-text-primary whitespace-pre-wrap">{message.content}</p>
+      
+      {/* Reactions */}
+      <div className="mt-2 flex flex-wrap gap-2">
+        {message?.reactions ? Object.entries(message.reactions).map(([emoji, count]) => (
+          <button
+            key={emoji}
+            onClick={() => handleReaction(emoji)}
+            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm
+              ${message.userReactions.includes(emoji)
+                ? 'bg-accent-primary/20 text-text-primary'
+                : 'bg-background-secondary text-text-secondary hover:bg-background-secondary/80'
+              }`}
+          >
+            <span>{emoji}</span>
+            <span>{count}</span>
+          </button>
+        )) : (
+          <span className="text-text-secondary">No reactions yet</span>
+        )}
+        
+        {/* Add reaction button */}
+        <div className="relative">
+          <button
+            onClick={() => setShowReactionPicker(!showReactionPicker)}
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm
+              bg-background-secondary text-text-secondary hover:bg-background-secondary/80"
+          >
+            <span>+</span>
+          </button>
+          
+          {/* Quick reaction picker */}
+          {showReactionPicker && (
+            <div className="absolute bottom-full left-0 mb-2 p-2 bg-background-secondary 
+              rounded-lg shadow-lg flex gap-2 z-10">
+              {QUICK_REACTIONS.map(emoji => (
+                <button
+                  key={emoji}
+                  onClick={() => handleReaction(emoji)}
+                  className="hover:bg-background-primary p-1 rounded"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 } 

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { messageApi } from '../api/message';
 import { useChannel } from './ChannelContext';
 import type { Message } from '../types/message';
+import { reactionApi } from '../api/reaction';
 
 interface ChannelMessages {
   [channelId: string]: Message[];
@@ -14,6 +15,7 @@ interface MessageContextType {
   sendMessage: (content: string) => Promise<void>;
   updateMessage: (messageId: string, content: string) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
+  toggleReaction: (messageId: string, emoji: string) => Promise<void>;
 }
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
@@ -98,6 +100,49 @@ export function MessageProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    if (!currentChannel) return;
+
+    try {
+      const message = messages.find(m => m.id === messageId);
+      if (!message) return;
+
+      const hasReacted = message.userReactions.includes(emoji);
+
+      if (hasReacted) {
+        await reactionApi.removeReaction(currentChannel.id, messageId, emoji);
+      } else {
+        await reactionApi.addReaction(currentChannel.id, messageId, emoji);
+      }
+
+      // Update message reactions in state
+      setChannelMessages(prev => ({
+        ...prev,
+        [currentChannel.id]: prev[currentChannel.id].map(msg => {
+          if (msg.id === messageId) {
+            const newCount = (msg.reactions[emoji] || 0) + (hasReacted ? -1 : 1);
+            const newUserReactions = hasReacted
+              ? msg.userReactions.filter(e => e !== emoji)
+              : [...msg.userReactions, emoji];
+
+            return {
+              ...msg,
+              reactions: {
+                ...msg.reactions,
+                [emoji]: newCount
+              },
+              userReactions: newUserReactions
+            };
+          }
+          return msg;
+        })
+      }));
+    } catch (err) {
+      console.error('Error toggling reaction:', err);
+      throw err;
+    }
+  };
+
   return (
     <MessageContext.Provider
       value={{
@@ -107,6 +152,7 @@ export function MessageProvider({ children }: { children: ReactNode }) {
         sendMessage,
         updateMessage,
         deleteMessage,
+        toggleReaction,
       }}
     >
       {children}
