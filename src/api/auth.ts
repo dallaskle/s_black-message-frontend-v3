@@ -1,17 +1,29 @@
 import axiosInstance from './axiosConfig';
 import type { LoginCredentials, AuthResponse } from '../types/auth';
-import { AxiosError } from 'axios';
 
 interface RefreshTokenResponse {
   user: User;
   accessToken: string;
 }
 
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+const processQueue = (error: any = null, token: string | null = null) => {
+  refreshSubscribers.forEach((callback) => {
+    if (error) {
+      callback('');
+    } else if (token) {
+      callback(token);
+    }
+  });
+  refreshSubscribers = [];
+};
+
 export const authApi = {
   login: async (credentials: LoginCredentials) => {
     const { data } = await axiosInstance.post<AuthResponse>('/auth/login', credentials);
     
-    // Sets access token in Authorization header
     if (data.session?.access_token) {
       axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.session.access_token}`;
     }
@@ -20,25 +32,38 @@ export const authApi = {
   },
 
   refreshToken: async () => {
-    console.log('Frontend: Attempting to refresh token');
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        refreshSubscribers.push((token) => {
+          if (token) {
+            resolve({ accessToken: token, user: null });
+          } else {
+            reject(new Error('Refresh failed'));
+          }
+        });
+      });
+    }
+
+    isRefreshing = true;
+
     try {
       const { data } = await axiosInstance.post<RefreshTokenResponse>('/auth/refresh-token');
-      console.log('Frontend: Refresh token response:', { 
-        success: !!data.accessToken,
-        user: !!data.user 
-      });
       
-      if (data.accessToken) {
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`;
+      if (!data || !data.accessToken) {
+        delete axiosInstance.defaults.headers.common.Authorization;
+        processQueue(new Error('No access token received'), null);
+        return null;
       }
       
+      axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`;
+      processQueue(null, data.accessToken);
       return data;
     } catch (error) {
-      console.error('Frontend: Refresh token error:', {
-        status: (error as AxiosError)?.response?.status,
-        message: (error as AxiosError)?.response?.data?.message || (error as Error).message
-      });
-      throw error;
+      delete axiosInstance.defaults.headers.common.Authorization;
+      processQueue(error, null);
+      return null;
+    } finally {
+      isRefreshing = false;
     }
   },
 
@@ -46,7 +71,6 @@ export const authApi = {
     try {
       await axiosInstance.post('/auth/logout');
     } finally {
-      // Always clear the Authorization header, even if the request fails
       delete axiosInstance.defaults.headers.common.Authorization;
     }
   }
