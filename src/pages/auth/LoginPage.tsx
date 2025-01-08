@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { authApi } from '../../api/auth';
 import { Button } from '../../components/ui/Button';
+import S_Black_Full_Logo from '../../../public/S_Black_Full_Logo.png';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -37,6 +38,11 @@ export function LoginPage() {
     <div className="min-h-screen bg-background-primary flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8 bg-background-secondary p-8 rounded-xl">
         <div className="text-center">
+          <img
+            src={S_Black_Full_Logo}
+            alt="S_Black Logo"
+            className="h-36 mx-auto mb-6 pt--8"
+          />
           <h2 className="text-3xl font-bold text-text-primary">Welcome back</h2>
           <p className="mt-2 text-text-secondary">Sign in to your account</p>
         </div>
