@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshTimeout, setRefreshTimeout] = useState<NodeJS.Timeout>();
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const clearError = useCallback(() => {
     setAuthState(prev => ({ ...prev, error: null }));
@@ -101,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await authApi.logout();
+    } finally {
       setAuthState({
         isAuthenticated: false,
         isLoading: false,
@@ -108,60 +110,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error: null,
       });
       setAccessToken(null);
-      if (refreshTimeout) {
-        clearTimeout(refreshTimeout);
+    }
+  };
+
+  const refreshToken = async () => {
+    if (isRefreshing) {
+      return null;
+    }
+    
+    try {
+      setIsRefreshing(true);
+      const response = await authApi.refreshToken();
+      if (response.accessToken) {
+        setAccessToken(response.accessToken);
+        setAuthState(prev => ({
+          ...prev,
+          isAuthenticated: true,
+          isLoading: false,
+          user: response.user,
+        }));
+        scheduleTokenRefresh(response.accessToken);
+        return response.accessToken;
       }
+      setAuthState(prev => ({
+        ...prev,
+        isAuthenticated: false,
+        isLoading: false,
+        user: null
+      }));
+      return null;
     } catch (error) {
       handleAuthError(error);
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        isAuthenticated: false,
+        user: null
+      }));
+      return null;
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
   const getAccessToken = useCallback(async () => {
-    if (!accessToken) {
+    if (accessToken) {
       try {
-        const response = await authApi.refreshToken();
-        if (!response.accessToken) {
-          throw new Error('No access token received');
+        const decoded = jwtDecode<{ exp: number }>(accessToken);
+        if (decoded.exp * 1000 > Date.now()) {
+          return accessToken;
         }
-        setAccessToken(response.accessToken);
-        scheduleTokenRefresh(response.accessToken);
-        return response.accessToken;
       } catch (error) {
-        handleAuthError(error);
-        return null;
+        console.error('Invalid access token:', error);
       }
     }
-    return accessToken;
-  }, [accessToken, scheduleTokenRefresh, handleAuthError]);
+    return refreshToken();
+  }, [accessToken]);
 
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const response = await authApi.refreshToken();
-        if (!response.accessToken) {
-          throw new Error('No access token received');
-        }
-        setAccessToken(response.accessToken);
-        setAuthState({
-          isAuthenticated: true,
-          isLoading: false,
-          user: response.user,
-          error: null,
-        });
-        scheduleTokenRefresh(response.accessToken);
-      } catch (error) {
-        setAuthState(prev => ({ ...prev, isLoading: false }));
-      }
-    };
-
-    initAuth();
-
+    refreshToken();
     return () => {
       if (refreshTimeout) {
         clearTimeout(refreshTimeout);
       }
     };
-  }, [scheduleTokenRefresh]);
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -193,10 +206,13 @@ export function useLogout() {
   const { setMessages } = useMessage();
 
   const handleLogout = async () => {
-    await logout();
-    setCurrentWorkspace(null as any);
-    setCurrentChannel(null as any);
-    setMessages([]);
+    try {
+      await logout();
+    } finally {
+      setCurrentWorkspace(null as any);
+      setCurrentChannel(null);
+      setMessages([]);
+    }
   };
 
   return handleLogout;

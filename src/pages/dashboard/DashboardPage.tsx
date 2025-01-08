@@ -10,6 +10,7 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useChannel } from '../../contexts/ChannelContext';
 import { useState } from 'react';
 import { useAuth, useLogout } from '../../contexts/AuthContext';
+import Spinner from '../../components/ui/Spinner';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -92,8 +93,17 @@ function UserInfo() {
 }
 
 export function DashboardPage() {
+  const { isLoading } = useAuth();
   const [workspaceWidth, setWorkspaceWidth] = useState(240);
   const [channelWidth, setChannelWidth] = useState(240);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <WorkspaceProvider>

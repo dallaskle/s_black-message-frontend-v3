@@ -29,31 +29,52 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (error.response?.status === 401 && originalRequest.url === '/auth/refresh-token') {
+      isRefreshing = false;
+      failedQueue = [];
+      delete axiosInstance.defaults.headers.common.Authorization;
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
+      console.log('Interceptor: 401 error detected', {
+        url: originalRequest.url,
+        isRetry: !!originalRequest._retry,
+        isRefreshing
+      });
+
       if (isRefreshing) {
+        console.log('Interceptor: Token refresh already in progress, queueing request');
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then((token) => {
+            console.log('Interceptor: Retrying request with new token');
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return axiosInstance(originalRequest);
           })
-          .catch((err) => Promise.reject(err));
+          .catch((err) => {
+            console.error('Interceptor: Failed queue request error:', err);
+            return Promise.reject(err);
+          });
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
+        console.log('Interceptor: Attempting token refresh');
         const response = await axiosInstance.post('/auth/refresh-token');
         const { accessToken } = response.data;
         
+        console.log('Interceptor: Token refresh successful');
         axiosInstance.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         
         processQueue(null, accessToken);
         return axiosInstance(originalRequest);
       } catch (refreshError) {
+        console.error('Interceptor: Token refresh failed:', refreshError);
         processQueue(refreshError, null);
         return Promise.reject(refreshError);
       } finally {
