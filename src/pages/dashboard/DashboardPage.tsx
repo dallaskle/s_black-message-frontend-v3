@@ -11,6 +11,7 @@ import { useChannel } from '../../contexts/ChannelContext';
 import { useState } from 'react';
 import { useAuth, useLogout } from '../../contexts/AuthContext';
 import Spinner from '../../components/ui/Spinner';
+import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -92,10 +93,113 @@ function UserInfo() {
   );
 }
 
-export function DashboardPage() {
-  const { isLoading } = useAuth();
+// Move the dashboard content to a separate component
+function DashboardContent() {
   const [workspaceWidth, setWorkspaceWidth] = useState(240);
   const [channelWidth, setChannelWidth] = useState(240);
+  const { currentChannel } = useChannel();
+
+  useRealtimeMessages(currentChannel?.id);
+
+  return (
+    <div className="h-screen bg-background-primary flex overflow-hidden">
+      {/* Workspace List */}
+      <div 
+        className="relative h-full flex flex-col bg-background-secondary border-r border-text-secondary/10"
+        style={{ 
+          width: `${workspaceWidth}px`,
+          minWidth: '180px',
+          maxWidth: '400px'
+        }}
+      >
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            <WorkspaceList />
+          </div>
+        </div>
+        <UserInfo />
+        {/* Resize Handle */}
+        <div 
+          className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
+          style={{ padding: '0 6px' }}
+          onMouseDown={(e) => {
+            const startX = e.clientX;
+            const startWidth = workspaceWidth;
+
+            const handleMouseMove = (moveEvent: MouseEvent) => {
+              const newWidth = startWidth + (moveEvent.clientX - startX);
+              if (newWidth >= 180 && newWidth <= 400) {
+                setWorkspaceWidth(newWidth);
+              }
+            };
+
+            const handleMouseUp = () => {
+              document.removeEventListener('mousemove', handleMouseMove);
+              document.removeEventListener('mouseup', handleMouseUp);
+            };
+
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+          }}
+        >
+          <div className="h-full w-[2px] bg-text-secondary/10 group-hover:bg-accent-primary/50 group-active:bg-accent-primary" />
+        </div>
+      </div>
+
+      {/* Channel List */}
+      <div 
+        className="relative h-full flex flex-col bg-background-secondary/50 border-r border-text-secondary/10"
+        style={{ 
+          width: `${channelWidth}px`,
+          minWidth: '180px',
+          maxWidth: '400px'
+        }}
+      >
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            <ChannelList />
+          </div>
+        </div>
+        {/* Resize Handle */}
+        <div 
+          className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
+          style={{ padding: '0 6px' }}
+          onMouseDown={(e) => {
+            const startX = e.clientX;
+            const startWidth = channelWidth;
+
+            const handleMouseMove = (moveEvent: MouseEvent) => {
+              const newWidth = startWidth + (moveEvent.clientX - startX);
+              if (newWidth >= 180 && newWidth <= 400) {
+                setChannelWidth(newWidth);
+              }
+            };
+
+            const handleMouseUp = () => {
+              document.removeEventListener('mousemove', handleMouseMove);
+              document.removeEventListener('mouseup', handleMouseUp);
+            };
+
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+          }}
+        >
+          <div className="h-full w-[2px] bg-text-secondary/10 group-hover:bg-accent-primary/50 group-active:bg-accent-primary" />
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <DashboardHeader />
+        <MessageList />
+      </div>
+    </div>
+  );
+}
+
+// Main DashboardPage component now only handles providers and loading state
+export function DashboardPage() {
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -109,98 +213,7 @@ export function DashboardPage() {
     <WorkspaceProvider>
       <ChannelProvider>
         <MessageProvider>
-          <div className="h-screen bg-background-primary flex overflow-hidden">
-            {/* Workspace List */}
-            <div 
-              className="relative h-full flex flex-col bg-background-secondary border-r border-text-secondary/10"
-              style={{ 
-                width: `${workspaceWidth}px`,
-                minWidth: '180px',
-                maxWidth: '400px'
-              }}
-            >
-              <div className="flex-1 overflow-y-auto">
-                <div className="p-4">
-                  <WorkspaceList />
-                </div>
-              </div>
-              <UserInfo />
-              {/* Resize Handle */}
-              <div 
-                className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
-                style={{ padding: '0 6px' }}
-                onMouseDown={(e) => {
-                  const startX = e.clientX;
-                  const startWidth = workspaceWidth;
-
-                  const handleMouseMove = (moveEvent: MouseEvent) => {
-                    const newWidth = startWidth + (moveEvent.clientX - startX);
-                    if (newWidth >= 180 && newWidth <= 400) {
-                      setWorkspaceWidth(newWidth);
-                    }
-                  };
-
-                  const handleMouseUp = () => {
-                    document.removeEventListener('mousemove', handleMouseMove);
-                    document.removeEventListener('mouseup', handleMouseUp);
-                  };
-
-                  document.addEventListener('mousemove', handleMouseMove);
-                  document.addEventListener('mouseup', handleMouseUp);
-                }}
-              >
-                <div className="h-full w-[2px] bg-text-secondary/10 group-hover:bg-accent-primary/50 group-active:bg-accent-primary" />
-              </div>
-            </div>
-
-            {/* Channel List */}
-            <div 
-              className="relative h-full flex flex-col bg-background-secondary/50 border-r border-text-secondary/10"
-              style={{ 
-                width: `${channelWidth}px`,
-                minWidth: '180px',
-                maxWidth: '400px'
-              }}
-            >
-              <div className="flex-1 overflow-y-auto">
-                <div className="p-4">
-                  <ChannelList />
-                </div>
-              </div>
-              {/* Resize Handle */}
-              <div 
-                className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
-                style={{ padding: '0 6px' }}
-                onMouseDown={(e) => {
-                  const startX = e.clientX;
-                  const startWidth = channelWidth;
-
-                  const handleMouseMove = (moveEvent: MouseEvent) => {
-                    const newWidth = startWidth + (moveEvent.clientX - startX);
-                    if (newWidth >= 180 && newWidth <= 400) {
-                      setChannelWidth(newWidth);
-                    }
-                  };
-
-                  const handleMouseUp = () => {
-                    document.removeEventListener('mousemove', handleMouseMove);
-                    document.removeEventListener('mouseup', handleMouseUp);
-                  };
-
-                  document.addEventListener('mousemove', handleMouseMove);
-                  document.addEventListener('mouseup', handleMouseUp);
-                }}
-              >
-                <div className="h-full w-[2px] bg-text-secondary/10 group-hover:bg-accent-primary/50 group-active:bg-accent-primary" />
-              </div>
-            </div>
-
-            {/* Main content */}
-            <div className="flex-1 flex flex-col h-full overflow-hidden">
-              <DashboardHeader />
-              <MessageList />
-            </div>
-          </div>
+          <DashboardContent />
         </MessageProvider>
       </ChannelProvider>
     </WorkspaceProvider>

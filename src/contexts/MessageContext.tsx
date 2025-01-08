@@ -13,6 +13,8 @@ interface MessageContextType {
   updateMessage: (messageId: string, content: string) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
   toggleReaction: (messageId: string, emoji: string) => Promise<void>;
+  addMessage: (message: Message) => void;
+  updateReactions: (messageId: string) => Promise<void>;
 }
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
@@ -277,6 +279,61 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
     }
   }, [messages]);
 
+  const addMessage = useCallback((message: Message) => {
+    setMessages(prev => {
+      // If message is a reply, add it to the parent's replies
+      if (message.parent_message_id) {
+        return prev.map(msg => {
+          if (msg.id === message.parent_message_id) {
+            return {
+              ...msg,
+              replies: [...(msg.replies || []), message]
+            };
+          }
+          return msg;
+        });
+      }
+      // Otherwise add to main messages array
+      return [...prev, message];
+    });
+  }, []);
+
+  const updateReactions = useCallback(async (messageId: string) => {
+    try {
+      const message = messages.find(m => m.id === messageId);
+      if (!message) return;
+
+      const [reactionCounts, userReactions] = await Promise.all([
+        reactionApi.getReactionCounts(message.channel_id, messageId),
+        reactionApi.getMessageReactions(message.channel_id, messageId)
+      ]);
+
+      setMessages(prev => prev.map(msg => {
+        if (msg.id === messageId) {
+          return {
+            ...msg,
+            reactions: reactionCounts,
+            userReactions
+          };
+        }
+        // Also update the message if it exists in any thread replies
+        if (msg.replies) {
+          return {
+            ...msg,
+            replies: msg.replies.map(reply => 
+              reply.id === messageId 
+                ? { ...reply, reactions: reactionCounts, userReactions }
+                : reply
+            )
+          };
+        }
+        return msg;
+      }));
+    } catch (err) {
+      console.error('Failed to update reactions:', err);
+    }
+  }, [messages]);
+
   const value = {
     messages,
     setMessages,
@@ -285,7 +342,9 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
     sendMessage,
     updateMessage,
     deleteMessage,
-    toggleReaction
+    toggleReaction,
+    addMessage,
+    updateReactions
   };
 
   return (
