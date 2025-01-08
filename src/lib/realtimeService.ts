@@ -30,11 +30,23 @@ export class RealtimeService {
           table: 'messages',
           filter: `channel_id=eq.${channelId}`,
         },
-        (payload: RealtimePostgresChangesPayload<Message>) => {
+        async (payload: RealtimePostgresChangesPayload<Message>) => {
           try {
+            // Fetch user information for the message
+            const { data: userData } = await supabase
+              .from('users')
+              .select('name')
+              .eq('id', payload.new.user_id)
+              .single();
+
+            const messageWithName = {
+              ...payload.new,
+              name: userData?.name || 'Unknown User'
+            } as Message;
+
             callback({
               eventType: payload.eventType,
-              message: payload.new as Message,
+              message: messageWithName,
             });
           } catch (error) {
             console.error('Error processing message change:', error);

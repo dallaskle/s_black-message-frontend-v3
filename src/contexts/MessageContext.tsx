@@ -19,7 +19,15 @@ interface MessageContextType {
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
-export function MessageProvider({ children }: { children: React.ReactNode }) {
+interface MessageProviderProps {
+  children: React.ReactNode;
+  user: {
+    id: string;
+    name: string;
+  } | null;
+}
+
+export function MessageProvider({ children, user }: MessageProviderProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,16 +75,16 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
   const sendMessage = useCallback(async (content: string, parentMessageId?: string) => {
     if (!currentChannel?.id) return;
 
-    // Create optimistic message
+    // Create optimistic message with the actual user's name
     const optimisticMessage = {
-      id: `temp-${Date.now()}`, // temporary ID
+      id: `temp-${Date.now()}`,
       content,
       channel_id: currentChannel.id,
       parent_message_id: parentMessageId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      user_id: 'current-user', // You'll need to get this from your auth context
-      name: 'User',
+      user_id: user?.id || 'current-user',
+      name: user?.name || 'User',
       reactions: {},
       userReactions: []
     };
@@ -133,7 +141,7 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
       setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
       setError(err instanceof Error ? err.message : 'Failed to send message');
     }
-  }, [currentChannel?.id]);
+  }, [currentChannel?.id, user]);
 
   const updateMessage = useCallback(async (messageId: string, content: string) => {
     try {
@@ -281,10 +289,46 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
 
   const addMessage = useCallback((message: Message) => {
     setMessages(prev => {
-      // If message is a reply, add it to the parent's replies
+      // Check if message already exists
+      const messageExists = prev.some(m => m.id === message.id || 
+        (m.id.startsWith('temp-') && m.content === message.content));
+
+      if (messageExists) {
+        // If message exists, just update it (in case server added more data)
+        return prev.map(m => {
+          if (m.id === message.id || 
+            (m.id.startsWith('temp-') && m.content === message.content)) {
+            return {
+              ...message,
+              // Keep existing name if the new message doesn't have one
+              name: message.name || m.name
+            };
+          }
+          return m;
+        });
+      }
+
+      // If message is a reply...
       if (message.parent_message_id) {
         return prev.map(msg => {
           if (msg.id === message.parent_message_id) {
+            const replyExists = msg.replies?.some(r => 
+              r.id === message.id || 
+              (r.id.startsWith('temp-') && r.content === message.content)
+            );
+
+            if (replyExists) {
+              return {
+                ...msg,
+                replies: msg.replies?.map(r => 
+                  (r.id === message.id || 
+                    (r.id.startsWith('temp-') && r.content === message.content))
+                    ? { ...message, name: message.name || r.name }
+                    : r
+                )
+              };
+            }
+
             return {
               ...msg,
               replies: [...(msg.replies || []), message]
@@ -293,6 +337,7 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
           return msg;
         });
       }
+
       // Otherwise add to main messages array
       return [...prev, message];
     });

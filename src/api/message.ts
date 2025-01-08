@@ -20,13 +20,18 @@ export const messageApi = {
       { content, parentMessageId }
     );
 
-    /*if (!data.name) {
-      const { data: userData } = await apiClient.get('/api/users/me');
-      return {
-        ...data,
-        name: userData.name
-      };
-    }*/
+    // If the message doesn't have a name, try to get the user data
+    if (!data.name) {
+      try {
+        const { data: userData } = await axiosInstance.get('/api/users/me');
+        return {
+          ...data,
+          name: userData.name
+        };
+      } catch (err) {
+        console.error('Failed to fetch user data:', err);
+      }
+    }
 
     return data;
   },

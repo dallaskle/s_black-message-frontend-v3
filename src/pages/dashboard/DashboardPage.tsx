@@ -199,7 +199,7 @@ function DashboardContent() {
 
 // Main DashboardPage component now only handles providers and loading state
 export function DashboardPage() {
-  const { isLoading } = useAuth();
+  const { isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -212,7 +212,7 @@ export function DashboardPage() {
   return (
     <WorkspaceProvider>
       <ChannelProvider>
-        <MessageProvider>
+        <MessageProvider user={user}>
           <DashboardContent />
         </MessageProvider>
       </ChannelProvider>
