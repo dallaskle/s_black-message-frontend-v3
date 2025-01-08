@@ -8,9 +8,5 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 }

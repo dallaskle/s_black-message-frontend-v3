@@ -7,16 +7,26 @@ import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/routes/ProtectedRoute';
 import { PublicRoute } from './components/routes/PublicRoute';
+import Spinner from './components/ui/Spinner';
 
 // Create a separate component for the root route
 function RootRoute() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return null;
+    return (
+      <div className="h-screen w-screen flex items-center justify-center">
+        <Spinner />
+      </div>
+    );
   }
 
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
+  // When loading is done, redirect based on auth state
+  return isAuthenticated ? (
+    <Navigate to="/dashboard" replace /> 
+  ) : (
+    <Navigate to="/login" replace />
+  );
 }
 
 function App() {

@@ -1,16 +1,16 @@
-import { apiClient } from './client';
+import axiosInstance from './axiosConfig';
 import type { Channel } from '../types/channel';
 
 export const channelApi = {
   getWorkspaceChannels: async (workspaceId: string) => {
-    const { data } = await apiClient.get<Channel[]>(
+    const { data } = await axiosInstance.get<Channel[]>(
       `/api/workspaces/${workspaceId}/channels`
     );
     return data;
   },
 
   getChannel: async (channelId: string) => {
-    const { data } = await apiClient.get<Channel>(`/api/channels/${channelId}`);
+    const { data } = await axiosInstance.get<Channel>(`/api/channels/${channelId}`);
     return data;
   },
 
@@ -20,7 +20,7 @@ export const channelApi = {
     topic?: string;
     description?: string;
   }) => {
-    const { data } = await apiClient.post<Channel>(
+    const { data } = await axiosInstance.post<Channel>(
       `/api/workspaces/${workspaceId}/channels`,
       channel
     );
@@ -28,7 +28,7 @@ export const channelApi = {
   },
 
   createDM: async (workspaceId: string, targetUserId: string) => {
-    const { data } = await apiClient.post<Channel>(
+    const { data } = await axiosInstance.post<Channel>(
       `/api/workspaces/${workspaceId}/dm`,
       { targetUserId }
     );

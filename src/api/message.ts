@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import axiosInstance from './axiosConfig';
 import type { Message } from '../types/message';
 
 export const messageApi = {
@@ -6,7 +6,7 @@ export const messageApi = {
     limit?: number;
     before?: string;
   }) => {
-    const { data } = await apiClient.get<Message[]>(
+    const { data } = await axiosInstance.get<Message[]>(
       `/api/channels/${channelId}/messages`,
       { params }
     );
@@ -15,7 +15,7 @@ export const messageApi = {
 
   createMessage: async (channelId: string, content: string, parentMessageId?: string) => {
     console.log('parentMessageId:', parentMessageId);
-    const { data } = await apiClient.post<Message>(
+    const { data } = await axiosInstance.post<Message>(
       `/api/channels/${channelId}/messages`,
       { content, parentMessageId }
     );
@@ -32,7 +32,7 @@ export const messageApi = {
   },
 
   updateMessage: async (messageId: string, content: string) => {
-    const { data } = await apiClient.patch<Message>(
+    const { data } = await axiosInstance.patch<Message>(
       `/api/messages/${messageId}`,
       { content }
     );
@@ -40,14 +40,14 @@ export const messageApi = {
   },
 
   deleteMessage: async (messageId: string) => {
-    await apiClient.delete(`/api/messages/${messageId}`);
+    await axiosInstance.delete(`/api/messages/${messageId}`);
   },
 
   getThreadMessages: async (messageId: string, params?: {
     limit?: number;
     before?: string;
   }) => {
-    const { data } = await apiClient.get<Message[]>(
+    const { data } = await axiosInstance.get<Message[]>(
       `/api/messages/${messageId}/thread`,
       { params }
     );

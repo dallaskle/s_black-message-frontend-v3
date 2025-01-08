@@ -8,9 +8,5 @@ export function PublicRoute({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return <>{children}</>;
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
 }
