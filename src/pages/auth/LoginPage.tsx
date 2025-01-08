@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { authApi } from '../../api/auth';
+import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/Button';
 import S_Black_Full_Logo from '../../../public/S_Black_Full_Logo.png';
 
@@ -17,6 +17,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export function LoginPage() {
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
+  const { login } = useAuth();
   
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -24,11 +25,8 @@ export function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const response = await authApi.login(data);
-      localStorage.setItem('accessToken', response.session?.access_token || '');
-      localStorage.setItem('refreshToken', response.session?.refresh_token || '');
-      localStorage.setItem('userName', response.user.name);
-      navigate('/dashboard');
+      await login(data);
+      // The navigation will be handled by the AuthContext
     } catch (err) {
       setError('Invalid credentials');
     }
