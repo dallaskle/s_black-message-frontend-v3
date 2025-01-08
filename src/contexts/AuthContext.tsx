@@ -1,5 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { authApi } from '../api/auth';
+import { AxiosError } from 'axios';
+import { jwtDecode } from 'jwt-decode';
 import { useWorkspace } from './WorkspaceContext';
 import { useChannel } from './ChannelContext';
 import { useMessage } from './MessageContext';
@@ -8,7 +10,6 @@ interface User {
   id: string;
   email: string;
   name: string;
-  // Add other user properties
 }
 
 interface LoginCredentials {
@@ -16,103 +17,159 @@ interface LoginCredentials {
   password: string;
 }
 
-interface AuthContextType {
+interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: User | null;
   error: string | null;
+}
+
+interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
-  refreshAuth: () => Promise<void>;
+  getAccessToken: () => Promise<string | null>;
   clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [authState, setAuthState] = useState<AuthState>({
+    isAuthenticated: false,
+    isLoading: true,
+    user: null,
+    error: null,
+  });
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [refreshTimeout, setRefreshTimeout] = useState<NodeJS.Timeout>();
 
-  const clearError = () => setError(null);
-
-  const refreshAuth = async () => {
-    try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        throw new Error('No refresh token found');
-      }
-
-      const response = await authApi.refreshToken();
-      setUser(response.user);
-      setIsAuthenticated(true);
-      clearError();
-    } catch (error) {
-      setIsAuthenticated(false);
-      setUser(null);
-      setError(error instanceof Error ? error.message : 'Authentication failed');
-      throw error;
-    }
-  };
-
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        await refreshAuth();
-      } catch (error) {
-        // Silent failure on initial load
-        console.error('Initial auth check failed:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
+  const clearError = useCallback(() => {
+    setAuthState(prev => ({ ...prev, error: null }));
   }, []);
 
+  const handleAuthError = useCallback((error: unknown) => {
+    const message = error instanceof AxiosError 
+      ? error.response?.data?.message || error.message
+      : 'An unexpected error occurred';
+    
+    setAuthState(prev => ({ 
+      ...prev, 
+      error: message,
+      isAuthenticated: false,
+      user: null 
+    }));
+    setAccessToken(null);
+  }, []);
+
+  const scheduleTokenRefresh = useCallback((token: string) => {
+    try {
+      const decoded = jwtDecode<{ exp: number }>(token);
+      const refreshTime = (decoded.exp * 1000) - Date.now() - 60000; // 1 minute before expiry
+      
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
+      
+      const timeout = setTimeout(() => authApi.refreshToken(), refreshTime);
+      setRefreshTimeout(timeout);
+    } catch (error) {
+      console.error('Error scheduling token refresh:', error);
+    }
+  }, [refreshTimeout]);
+
   const login = async (credentials: LoginCredentials) => {
-    setIsLoading(true);
+    setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       const response = await authApi.login(credentials);
-      setUser(response.user);
-      setIsAuthenticated(true);
-      clearError();
+      if (!response.session?.access_token) {
+        throw new Error('No access token received');
+      }
+      setAccessToken(response.session.access_token);
+      setAuthState({
+        isAuthenticated: true,
+        isLoading: false,
+        user: response.user,
+        error: null,
+      });
+      scheduleTokenRefresh(response.session.access_token);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Login failed');
+      handleAuthError(error);
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const logout = async () => {
-    setIsLoading(true);
     try {
       await authApi.logout();
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      setUser(null);
-      setIsAuthenticated(false);
-      clearError();
+      setAuthState({
+        isAuthenticated: false,
+        isLoading: false,
+        user: null,
+        error: null,
+      });
+      setAccessToken(null);
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Logout failed');
-      throw error;
-    } finally {
-      setIsLoading(false);
+      handleAuthError(error);
     }
   };
+
+  const getAccessToken = useCallback(async () => {
+    if (!accessToken) {
+      try {
+        const response = await authApi.refreshToken();
+        if (!response.accessToken) {
+          throw new Error('No access token received');
+        }
+        setAccessToken(response.accessToken);
+        scheduleTokenRefresh(response.accessToken);
+        return response.accessToken;
+      } catch (error) {
+        handleAuthError(error);
+        return null;
+      }
+    }
+    return accessToken;
+  }, [accessToken, scheduleTokenRefresh, handleAuthError]);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const response = await authApi.refreshToken();
+        if (!response.accessToken) {
+          throw new Error('No access token received');
+        }
+        setAccessToken(response.accessToken);
+        setAuthState({
+          isAuthenticated: true,
+          isLoading: false,
+          user: response.user,
+          error: null,
+        });
+        scheduleTokenRefresh(response.accessToken);
+      } catch (error) {
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+      }
+    };
+
+    initAuth();
+
+    return () => {
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
+    };
+  }, [scheduleTokenRefresh]);
 
   return (
     <AuthContext.Provider
       value={{
-        isAuthenticated,
-        isLoading,
-        user,
-        error,
+        ...authState,
         login,
         logout,
-        refreshAuth,
+        getAccessToken,
         clearError,
       }}
     >

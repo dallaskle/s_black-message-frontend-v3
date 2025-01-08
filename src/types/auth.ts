@@ -10,14 +10,14 @@ export interface RegisterCredentials {
 }
 
 export interface AuthResponse {
-  session: {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+  };
+  session?: {
     access_token: string;
     refresh_token: string;
   };
-  user: {
-    name: string;
-    id: string;
-    email: string;
-    created_at: string;
-  };
+  accessToken?: string; // For refresh token response
 } 

@@ -1,60 +1,30 @@
-import { apiClient } from './client';
-import type { LoginCredentials, RegisterCredentials, AuthResponse } from '../types/auth';
+import axiosInstance from './axiosConfig';
+import type { LoginCredentials, AuthResponse } from '../types/auth';
 
 export const authApi = {
   login: async (credentials: LoginCredentials) => {
-    const { data } = await apiClient.post<AuthResponse>('/auth/login', credentials);
+    const { data } = await axiosInstance.post<AuthResponse>('/auth/login', credentials);
     
-    console.log(data);
-
-    // Save tokens if they exist
+    // Set the default Authorization header
     if (data.session?.access_token) {
-      localStorage.setItem('accessToken', data.session.access_token);
-    }
-    if (data.session?.refresh_token) {
-      localStorage.setItem('refreshToken', data.session.refresh_token);
+      axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.session.access_token}`;
     }
     
     return data;
   },
 
-  register: async (credentials: RegisterCredentials) => {
-    const { data } = await apiClient.post<AuthResponse>('/auth/register', credentials);
+  refreshToken: async () => {
+    const { data } = await axiosInstance.post<AuthResponse>('/auth/refresh-token');
+    
+    if (data.accessToken) {
+      axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`;
+    }
+    
     return data;
   },
 
-  refreshToken: async (): Promise<AuthResponse> => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-
-    try {
-      const response = await apiClient.post<AuthResponse>('/auth/refresh-token', { 
-        token: refreshToken 
-      });
-      
-      const data = response.data;
-
-      // Update tokens
-      if (data.session?.access_token) {
-        localStorage.setItem('accessToken', data.session.access_token);
-      }
-      if (data.session?.refresh_token) {
-        localStorage.setItem('refreshToken', data.session.refresh_token);
-      }
-      
-      return data;
-    } catch (error) {
-      // If refresh fails, clear tokens
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      throw error;
-    }
-  },
-
-  logout: () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+  logout: async () => {
+    await axiosInstance.post('/auth/logout');
+    delete axiosInstance.defaults.headers.common.Authorization;
   }
 }; 
