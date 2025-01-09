@@ -32,7 +32,8 @@ export class RealtimeService {
         },
         async (payload: RealtimePostgresChangesPayload<Message>) => {
           try {
-            // Fetch user information for the message
+            if (!payload.new || !('user_id' in payload.new)) return;
+            
             const { data: userData } = await supabase
               .from('users')
               .select('name')
