@@ -1,12 +1,12 @@
 import axiosInstance from './axiosConfig';
 import type { Message } from '../types/message';
+import type { FileUploadResponse } from '../types/file';
 
-// Add interface for file data
-interface FileData {
-  fileUrl: string;
-  fileName: string;
-  fileSize: number;
-  fileType: string;
+// Update interface to use FileUploadResponse type
+interface MessageWithFile {
+  content: string;
+  parentMessageId?: string;
+  fileData?: FileUploadResponse;
 }
 
 export const messageApi = {
@@ -25,7 +25,7 @@ export const messageApi = {
     channelId: string, 
     content: string, 
     parentMessageId?: string,
-    fileData?: FileData
+    fileData?: FileUploadResponse
   ) => {
     const { data } = await axiosInstance.post<Message>(
       `/api/channels/${channelId}/messages`,

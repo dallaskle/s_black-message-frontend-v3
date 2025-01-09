@@ -43,6 +43,7 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
     try {
       if (uploadingFile?.file) {
         // Send message with file
+        console.log('sending message with file');
         await sendMessageWithFile(
           content,
           uploadingFile.file,
@@ -53,6 +54,7 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
         );
       } else {
         // Send regular message
+        console.log('sending regular message');
         await sendMessage(content, parentMessageId);
       }
 

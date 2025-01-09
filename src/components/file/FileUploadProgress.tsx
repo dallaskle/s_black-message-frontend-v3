@@ -1,10 +1,12 @@
 import { XMarkIcon } from '@heroicons/react/24/outline';
+
 interface FileUploadProgressProps {
   fileName: string;
   progress: number;
   error?: string;
   onCancel?: () => void;
 }
+
 export function FileUploadProgress({ fileName, progress, error, onCancel }: FileUploadProgressProps) {
   return (
     <div className="flex flex-col gap-1 p-2 bg-background-secondary rounded-lg">

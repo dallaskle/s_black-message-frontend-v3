@@ -1,5 +1,7 @@
 import { useRef, ChangeEvent } from 'react';
 import { PaperClipIcon } from '@heroicons/react/24/outline';
+import { formatFileSize } from '../../types/file';
+
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 const ALLOWED_FILE_TYPES = {
   'image/*': ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
@@ -14,12 +16,14 @@ const ALLOWED_FILE_TYPES = {
     'text/plain'
   ]
 };
+
 interface FileUploadButtonProps {
   onFileSelect: (file: File) => void;
   onError?: (error: string) => void;
   disabled?: boolean;
   maxSize?: number;
 }
+
 export function FileUploadButton({
   onFileSelect,
   onError,
@@ -73,13 +77,4 @@ export function FileUploadButton({
       />
     </>
   );
-}
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B';
-  const kb = bytes / 1024;
-  if (kb < 1024) return kb.toFixed(1) + ' KB';
-  const mb = kb / 1024;
-  if (mb < 1024) return mb.toFixed(1) + ' MB';
-  const gb = mb / 1024;
-  return gb.toFixed(1) + ' GB';
 } 

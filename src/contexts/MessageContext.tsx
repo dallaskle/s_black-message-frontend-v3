@@ -16,7 +16,12 @@ interface MessageContextType {
   toggleReaction: (messageId: string, emoji: string) => Promise<void>;
   addMessage: (message: Message) => void;
   updateReactions: (messageId: string) => Promise<void>;
-  sendMessageWithFile: (content: string, file: File, onProgress?: (progress: number) => void, parentMessageId?: string) => Promise<void>;
+  sendMessageWithFile: (
+    content: string, 
+    file: File, 
+    onProgress?: (progress: number) => void, 
+    parentMessageId?: string
+  ) => Promise<void>;
 }
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
@@ -393,6 +398,8 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     onProgress?: (progress: number) => void,
     parentMessageId?: string
   ) => {
+
+    console.log('sending message with file');
     if (!currentChannel?.id) return;
 
     // Create optimistic message
@@ -442,17 +449,14 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
         onProgress
       );
 
+      console.log('uploadedFile', uploadedFile);
+
       // Then create message with file reference
       const savedMessage = await messageApi.createMessage(
         currentChannel.id,
         content,
         parentMessageId,
-        {
-          fileUrl: uploadedFile.url,
-          fileName: uploadedFile.filename,
-          fileSize: uploadedFile.size,
-          fileType: uploadedFile.type
-        }
+        uploadedFile // This is now of type FileUploadResponse
       );
 
       // Replace optimistic message with saved message
