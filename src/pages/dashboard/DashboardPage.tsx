@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { useAuth, useLogout } from '../../contexts/AuthContext';
 import Spinner from '../../components/ui/Spinner';
 import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
+import { useRealtimeReactions } from '../../hooks/useRealtimeReactions';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -100,6 +101,7 @@ function DashboardContent() {
   const { currentChannel } = useChannel();
 
   useRealtimeMessages(currentChannel?.id);
+  useRealtimeReactions(currentChannel?.id);
 
   return (
     <div className="h-screen bg-background-primary flex overflow-hidden">

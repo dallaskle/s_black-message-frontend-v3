@@ -4,7 +4,7 @@ import { RegisterPage } from './pages/auth/RegisterPage';
 import { EmailVerificationPage } from './pages/auth/EmailVerificationPage';
 import { EmailLoginPage } from './pages/auth/EmailLoginPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/routes/ProtectedRoute';
 import { PublicRoute } from './components/routes/PublicRoute';
 import Spinner from './components/ui/Spinner';
@@ -21,7 +21,6 @@ function RootRoute() {
     );
   }
 
-  // When loading is done, redirect based on auth state
   return isAuthenticated ? (
     <Navigate to="/dashboard" replace /> 
   ) : (
@@ -31,8 +30,8 @@ function RootRoute() {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <Routes>
           <Route 
             path="/login" 
@@ -76,8 +75,8 @@ function App() {
           />
           <Route path="/" element={<RootRoute />} />
         </Routes>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 

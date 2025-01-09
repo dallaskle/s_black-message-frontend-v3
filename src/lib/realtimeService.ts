@@ -70,6 +70,8 @@ export class RealtimeService {
     const key = `reactions:${channelId}`;
     if (this.subscriptions[key]) return;
 
+    console.log(`Subscribing to reactions for channel ${channelId}`);
+
     this.subscriptions[key] = supabase
       .channel('reactions_changes')
       .on(
@@ -80,18 +82,51 @@ export class RealtimeService {
           table: 'reactions',
           filter: `channel_id=eq.${channelId}`,
         },
-        (payload: RealtimePostgresChangesPayload<Reaction>) => {
+        async (payload: RealtimePostgresChangesPayload<Reaction>) => {
           try {
-            callback({
-              eventType: payload.eventType,
-              reaction: payload.new as Reaction,
-            });
+            console.log('Reaction change payload:', payload);
+            
+            switch (payload.eventType) {
+              case 'INSERT':
+                // New reaction added
+                if (payload.new) {
+                  callback({
+                    eventType: 'INSERT',
+                    reaction: payload.new as Reaction,
+                  });
+                }
+                break;
+
+              case 'UPDATE':
+                // Reaction updated (though this should be rare)
+                if (payload.new) {
+                  callback({
+                    eventType: 'UPDATE',
+                    reaction: payload.new as Reaction,
+                  });
+                }
+                break;
+
+              case 'DELETE':
+                // Reaction removed
+                if (payload.old) {
+                  callback({
+                    eventType: 'DELETE',
+                    reaction: payload.old as Reaction,
+                  });
+                }
+                break;
+
+              default:
+                console.warn('Unknown reaction event type:', payload.eventType);
+            }
           } catch (error) {
             console.error('Error processing reaction change:', error);
           }
         }
       )
       .subscribe((status) => {
+        console.log(`Reaction subscription status: ${status}`);
         if (status === 'SUBSCRIBED') {
           console.log(`Subscribed to reactions for channel ${channelId}`);
         } else if (status === 'CLOSED') {

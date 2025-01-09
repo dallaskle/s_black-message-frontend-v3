@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useMessage } from '../../contexts/MessageContext';
 import type { Message as MessageType } from '../../types/message';
 
@@ -64,6 +64,82 @@ export function Message({ message, onThreadClick }: MessageProps) {
       lastReplyTime
     };
   }, [messages, message.id]);
+
+  // Add a useEffect to update reactions when they change
+  useEffect(() => {
+    if (showReactionPicker) {
+      // Close reaction picker when clicking outside
+      const handleClickOutside = (e: MouseEvent) => {
+        if (!(e.target as Element).closest('.reaction-picker')) {
+          setShowReactionPicker(false);
+        }
+      };
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showReactionPicker]);
+
+  // Render reactions section
+  const renderReactions = () => {
+    // Initialize empty reactions object if it doesn't exist
+    const reactions = message.reactions || {};
+    const userReactions = message.userReactions || [];
+
+    return (
+      <div className="mt-2 flex flex-wrap gap-2">
+        {Object.entries(reactions).length > 0 ? (
+          Object.entries(reactions).map(([emoji, count]) => (
+            <button
+              key={emoji}
+              onClick={() => handleReaction(emoji)}
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm
+                ${userReactions.includes(emoji)
+                  ? 'bg-accent-primary/20 text-text-primary'
+                  : 'bg-background-secondary text-text-secondary hover:bg-background-secondary/80'
+                }`}
+            >
+              <span>{emoji}</span>
+              <span>{count}</span>
+            </button>
+          ))
+        ) : (
+          <span className="text-text-secondary text-sm">No reactions yet</span>
+        )}
+        
+        {/* Add reaction button */}
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowReactionPicker(!showReactionPicker);
+            }}
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm
+              bg-background-secondary text-text-secondary hover:bg-background-secondary/80"
+          >
+            <span>+</span>
+          </button>
+          
+          {showReactionPicker && (
+            <div className="absolute bottom-full left-0 mb-2 p-2 bg-background-secondary 
+              rounded-lg shadow-lg flex gap-2 z-10 reaction-picker">
+              {QUICK_REACTIONS.map(emoji => (
+                <button
+                  key={emoji}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleReaction(emoji);
+                  }}
+                  className="hover:bg-background-primary p-1 rounded"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   if (isEditing) {
     return (
@@ -134,54 +210,8 @@ export function Message({ message, onThreadClick }: MessageProps) {
         </button>
       )}
 
-      {/* Reactions */}
-      <div className="mt-2 flex flex-wrap gap-2">
-        {message.reactions && Object.entries(message.reactions).length > 0 ? (
-          Object.entries(message.reactions).map(([emoji, count]) => (
-            <button
-              key={emoji}
-              onClick={() => handleReaction(emoji)}
-              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm
-                ${message.userReactions?.includes(emoji)
-                  ? 'bg-accent-primary/20 text-text-primary'
-                  : 'bg-background-secondary text-text-secondary hover:bg-background-secondary/80'
-                }`}
-            >
-              <span>{emoji}</span>
-              <span>{count}</span>
-            </button>
-          ))
-        ) : (
-          <span className="text-text-secondary">No reactions yet</span>
-        )}
-        
-        {/* Add reaction button */}
-        <div className="relative">
-          <button
-            onClick={() => setShowReactionPicker(!showReactionPicker)}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm
-              bg-background-secondary text-text-secondary hover:bg-background-secondary/80"
-          >
-            <span>+</span>
-          </button>
-          
-          {/* Quick reaction picker */}
-          {showReactionPicker && (
-            <div className="absolute bottom-full left-0 mb-2 p-2 bg-background-secondary 
-              rounded-lg shadow-lg flex gap-2 z-10">
-              {QUICK_REACTIONS.map(emoji => (
-                <button
-                  key={emoji}
-                  onClick={() => handleReaction(emoji)}
-                  className="hover:bg-background-primary p-1 rounded"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Add reactions section */}
+      {renderReactions()}
     </div>
   );
 } 

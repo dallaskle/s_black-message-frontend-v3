@@ -5,4 +5,5 @@ export interface Reaction {
   user_id: string;
   emoji: string;
   created_at: string;
+  updated_at: string;
 } 

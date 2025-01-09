@@ -345,20 +345,26 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
 
   const updateReactions = useCallback(async (messageId: string) => {
     try {
+      console.log('Updating reactions for message:', messageId);
       const message = messages.find(m => m.id === messageId);
-      if (!message) return;
+      if (!message) {
+        console.log('Message not found:', messageId);
+        return;
+      }
 
       const [reactionCounts, userReactions] = await Promise.all([
         reactionApi.getReactionCounts(message.channel_id, messageId),
         reactionApi.getMessageReactions(message.channel_id, messageId)
       ]);
 
+      console.log('New reaction data:', { reactionCounts, userReactions });
+
       setMessages(prev => prev.map(msg => {
         if (msg.id === messageId) {
           return {
             ...msg,
-            reactions: reactionCounts,
-            userReactions
+            reactions: reactionCounts || {},
+            userReactions: userReactions || []
           };
         }
         // Also update the message if it exists in any thread replies
@@ -367,7 +373,7 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
             ...msg,
             replies: msg.replies.map(reply => 
               reply.id === messageId 
-                ? { ...reply, reactions: reactionCounts, userReactions }
+                ? { ...reply, reactions: reactionCounts || {}, userReactions: userReactions || [] }
                 : reply
             )
           };
