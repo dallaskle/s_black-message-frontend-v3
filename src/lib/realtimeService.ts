@@ -118,7 +118,7 @@ export class RealtimeService {
                 break;
 
               default:
-                console.warn('Unknown reaction event type:', payload.eventType);
+                console.warn('Unknown reaction event type');
             }
           } catch (error) {
             console.error('Error processing reaction change:', error);
