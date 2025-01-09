@@ -25,27 +25,6 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
 
   const handleFileSelect = async (file: File) => {
     setUploadingFile({ file, progress: 0 });
-    
-    try {
-      await sendMessageWithFile(
-        content,
-        file,
-        (progress) => {
-          setUploadingFile(prev => prev ? { ...prev, progress } : null);
-        },
-        parentMessageId
-      );
-      
-      setContent('');
-      setUploadingFile(null);
-      if (onMessageSent) {
-        onMessageSent();
-      }
-      inputRef.current?.focus();
-    } catch (err) {
-      const error = err instanceof Error ? err.message : 'Failed to upload file';
-      setUploadingFile(prev => prev ? { ...prev, error } : null);
-    }
   };
 
   const handleFileError = (error: string) => {
@@ -62,8 +41,22 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
     if ((!content.trim() && !uploadingFile) || !currentChannel) return;
 
     try {
-      // TODO: Modify sendMessage to handle file attachments
-      await sendMessage(content, parentMessageId);
+      if (uploadingFile?.file) {
+        // Send message with file
+        await sendMessageWithFile(
+          content,
+          uploadingFile.file,
+          (progress) => {
+            setUploadingFile(prev => prev ? { ...prev, progress } : null);
+          },
+          parentMessageId
+        );
+      } else {
+        // Send regular message
+        await sendMessage(content, parentMessageId);
+      }
+
+      // Clear state after successful send
       setContent('');
       setUploadingFile(null);
       if (onMessageSent) {
@@ -72,7 +65,11 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
       // Focus back on input after sending
       inputRef.current?.focus();
     } catch (err) {
-      console.error('Failed to send message:', err);
+      const error = err instanceof Error ? err.message : 'Failed to send message';
+      if (uploadingFile) {
+        setUploadingFile(prev => prev ? { ...prev, error } : null);
+      }
+      console.error('Failed to send message:', error);
     }
   };
 
@@ -118,7 +115,7 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
         />
         <button
           type="submit"
-          disabled={!content.trim() && (!uploadingFile || uploadingFile.progress !== 100)}
+          disabled={!content.trim() && !uploadingFile?.file}
           className="px-4 py-2 bg-accent-primary text-white rounded-lg font-medium
             hover:bg-accent-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
