@@ -3,6 +3,7 @@ import { messageApi } from '../api/message';
 import { useChannel } from './ChannelContext';
 import type { Message } from '../types/message';
 import { reactionApi } from '../api/reaction';
+import { fileApi } from '../api/file';
 
 interface MessageContextType {
   messages: Message[];
@@ -15,6 +16,7 @@ interface MessageContextType {
   toggleReaction: (messageId: string, emoji: string) => Promise<void>;
   addMessage: (message: Message) => void;
   updateReactions: (messageId: string) => Promise<void>;
+  sendMessageWithFile: (content: string, file: File, onProgress?: (progress: number) => void, parentMessageId?: string) => Promise<void>;
 }
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
@@ -385,6 +387,97 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     }
   }, [messages]);
 
+  const sendMessageWithFile = useCallback(async (
+    content: string, 
+    file: File, 
+    onProgress?: (progress: number) => void,
+    parentMessageId?: string
+  ) => {
+    if (!currentChannel?.id) return;
+
+    // Create optimistic message
+    const optimisticMessage = {
+      id: `temp-${Date.now()}`,
+      content,
+      channel_id: currentChannel.id,
+      parent_message_id: parentMessageId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      user_id: user?.id || 'current-user',
+      name: user?.name || 'User',
+      reactions: {},
+      userReactions: [],
+      file: {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        url: URL.createObjectURL(file)
+      }
+    };
+
+    // Optimistically update UI
+    setMessages(prev => {
+      const newMessages = [...prev];
+      
+      if (parentMessageId) {
+        return newMessages.map(msg => {
+          if (msg.id === parentMessageId) {
+            return {
+              ...msg,
+              replies: [...(msg.replies || []), optimisticMessage]
+            };
+          }
+          return msg;
+        });
+      }
+      
+      return [...newMessages, optimisticMessage];
+    });
+
+    try {
+      // Upload file first
+      const uploadedFile = await fileApi.uploadFile(
+        currentChannel.id,
+        file,
+        onProgress
+      );
+
+      // Then create message with file reference
+      const savedMessage = await messageApi.createMessage(
+        currentChannel.id,
+        content,
+        parentMessageId,
+        {
+          fileUrl: uploadedFile.url,
+          fileName: uploadedFile.filename,
+          fileSize: uploadedFile.size,
+          fileType: uploadedFile.type
+        }
+      );
+
+      // Replace optimistic message with saved message
+      setMessages(prev => prev.map(msg => {
+        if (msg.id === optimisticMessage.id) {
+          return savedMessage;
+        }
+        if (msg.id === parentMessageId) {
+          return {
+            ...msg,
+            replies: (msg.replies || []).map(reply =>
+              reply.id === optimisticMessage.id ? savedMessage : reply
+            )
+          };
+        }
+        return msg;
+      }));
+
+    } catch (err) {
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
+      throw err;
+    }
+  }, [currentChannel?.id, user]);
+
   const value = {
     messages,
     setMessages,
@@ -395,7 +488,8 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     deleteMessage,
     toggleReaction,
     addMessage,
-    updateReactions
+    updateReactions,
+    sendMessageWithFile,
   };
 
   return (

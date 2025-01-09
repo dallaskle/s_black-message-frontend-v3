@@ -1,6 +1,14 @@
 import axiosInstance from './axiosConfig';
 import type { Message } from '../types/message';
 
+// Add interface for file data
+interface FileData {
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+}
+
 export const messageApi = {
   getChannelMessages: async (channelId: string, params?: {
     limit?: number;
@@ -13,21 +21,21 @@ export const messageApi = {
     return data;
   },
 
-  createMessage: async (channelId: string, content: string, parentMessageId?: string) => {
-    console.log('parentMessageId:', parentMessageId);
+  createMessage: async (
+    channelId: string, 
+    content: string, 
+    parentMessageId?: string,
+    fileData?: FileData
+  ) => {
     const { data } = await axiosInstance.post<Message>(
       `/api/channels/${channelId}/messages`,
-      { content, parentMessageId }
+      { content, parentMessageId, fileData }
     );
 
-    // If the message doesn't have a name, try to get the user data
     if (!data.name) {
       try {
         const { data: userData } = await axiosInstance.get('/api/users/me');
-        return {
-          ...data,
-          name: userData.name
-        };
+        return { ...data, name: userData.name };
       } catch (err) {
         console.error('Failed to fetch user data:', err);
       }
