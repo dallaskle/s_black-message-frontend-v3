@@ -3,25 +3,18 @@ import { messageApi } from '../api/message';
 import { useChannel } from './ChannelContext';
 import type { Message } from '../types/message';
 import { reactionApi } from '../api/reaction';
-import { fileApi } from '../api/file';
 
 interface MessageContextType {
   messages: Message[];
   setMessages: (messages: Message[]) => void;
   isLoading: boolean;
   error: string | null;
-  sendMessage: (content: string, parentMessageId?: string) => Promise<void>;
+  sendMessage: (content: string, file?: File, onProgress?: (progress: number) => void, parentMessageId?: string) => Promise<void>;
   updateMessage: (messageId: string, content: string) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
   toggleReaction: (messageId: string, emoji: string) => Promise<void>;
   addMessage: (message: Message) => void;
   updateReactions: (messageId: string) => Promise<void>;
-  sendMessageWithFile: (
-    content: string, 
-    file: File, 
-    onProgress?: (progress: number) => void, 
-    parentMessageId?: string
-  ) => Promise<void>;
 }
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
@@ -79,10 +72,15 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     fetchMessages();
   }, [currentChannel?.id]);
 
-  const sendMessage = useCallback(async (content: string, parentMessageId?: string) => {
+  const sendMessage = useCallback(async (
+    content: string,
+    file?: File,
+    onProgress?: (progress: number) => void,
+    parentMessageId?: string
+  ) => {
     if (!currentChannel?.id) return;
 
-    // Create optimistic message with the actual user's name
+    // Create optimistic message
     const optimisticMessage = {
       id: `temp-${Date.now()}`,
       content,
@@ -93,17 +91,20 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
       user_id: user?.id || 'current-user',
       name: user?.name || 'User',
       reactions: {},
-      userReactions: []
+      userReactions: [],
+      ...(file && {
+        file: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          url: URL.createObjectURL(file)
+        }
+      })
     };
 
-    // Optimistically update UI
+    // Add optimistic message to UI
     setMessages(prev => {
       const newMessages = [...prev];
-      
-      // Add to main messages array
-      newMessages.push(optimisticMessage);
-      
-      // If this is a thread reply, update the parent's replies
       if (parentMessageId) {
         return newMessages.map(msg => {
           if (msg.id === parentMessageId) {
@@ -115,15 +116,15 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
           return msg;
         });
       }
-      
-      return newMessages;
+      return [...newMessages, optimisticMessage];
     });
 
     try {
-      // Make API call
       const savedMessage = await messageApi.createMessage(
-        currentChannel.id, 
+        currentChannel.id,
         content,
+        file,
+        onProgress,
         parentMessageId
       );
 
@@ -135,7 +136,7 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
         if (msg.id === parentMessageId) {
           return {
             ...msg,
-            replies: (msg.replies || []).map(reply => 
+            replies: (msg.replies || []).map(reply =>
               reply.id === optimisticMessage.id ? savedMessage : reply
             )
           };
@@ -146,7 +147,7 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     } catch (err) {
       // Remove optimistic message on error
       setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
-      setError(err instanceof Error ? err.message : 'Failed to send message');
+      throw err;
     }
   }, [currentChannel?.id, user]);
 
@@ -392,96 +393,6 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     }
   }, [messages]);
 
-  const sendMessageWithFile = useCallback(async (
-    content: string, 
-    file: File, 
-    onProgress?: (progress: number) => void,
-    parentMessageId?: string
-  ) => {
-
-    console.log('sending message with file');
-    if (!currentChannel?.id) return;
-
-    // Create optimistic message
-    const optimisticMessage = {
-      id: `temp-${Date.now()}`,
-      content,
-      channel_id: currentChannel.id,
-      parent_message_id: parentMessageId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      user_id: user?.id || 'current-user',
-      name: user?.name || 'User',
-      reactions: {},
-      userReactions: [],
-      file: {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        url: URL.createObjectURL(file)
-      }
-    };
-
-    // Optimistically update UI
-    setMessages(prev => {
-      const newMessages = [...prev];
-      
-      if (parentMessageId) {
-        return newMessages.map(msg => {
-          if (msg.id === parentMessageId) {
-            return {
-              ...msg,
-              replies: [...(msg.replies || []), optimisticMessage]
-            };
-          }
-          return msg;
-        });
-      }
-      
-      return [...newMessages, optimisticMessage];
-    });
-
-    try {
-      // Upload file first
-      const uploadedFile = await fileApi.uploadFile(
-        currentChannel.id,
-        file,
-        onProgress
-      );
-
-      console.log('uploadedFile', uploadedFile);
-
-      // Then create message with file reference
-      const savedMessage = await messageApi.createMessage(
-        currentChannel.id,
-        content,
-        parentMessageId,
-        uploadedFile // This is now of type FileUploadResponse
-      );
-
-      // Replace optimistic message with saved message
-      setMessages(prev => prev.map(msg => {
-        if (msg.id === optimisticMessage.id) {
-          return savedMessage;
-        }
-        if (msg.id === parentMessageId) {
-          return {
-            ...msg,
-            replies: (msg.replies || []).map(reply =>
-              reply.id === optimisticMessage.id ? savedMessage : reply
-            )
-          };
-        }
-        return msg;
-      }));
-
-    } catch (err) {
-      // Remove optimistic message on error
-      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
-      throw err;
-    }
-  }, [currentChannel?.id, user]);
-
   const value = {
     messages,
     setMessages,
@@ -493,7 +404,6 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     toggleReaction,
     addMessage,
     updateReactions,
-    sendMessageWithFile,
   };
 
   return (

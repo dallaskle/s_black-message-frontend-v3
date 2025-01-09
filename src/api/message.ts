@@ -22,24 +22,40 @@ export const messageApi = {
   },
 
   createMessage: async (
-    channelId: string, 
-    content: string, 
-    parentMessageId?: string,
-    fileData?: FileUploadResponse
+    channelId: string,
+    content: string,
+    file?: File,
+    onProgress?: (progress: number) => void,
+    parentMessageId?: string
   ) => {
+    const formData = new FormData();
+    formData.append('content', content);
+    if (parentMessageId) {
+      formData.append('parentMessageId', parentMessageId);
+    }
+    if (file) {
+      formData.append('file', file);
+    }
+
     const { data } = await axiosInstance.post<Message>(
       `/api/channels/${channelId}/messages`,
-      { content, parentMessageId, fileData }
-    );
-
-    if (!data.name) {
-      try {
-        const { data: userData } = await axiosInstance.get('/api/users/me');
-        return { ...data, name: userData.name };
-      } catch (err) {
-        console.error('Failed to fetch user data:', err);
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        ...(file && onProgress ? {
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total && onProgress) {
+              const progress = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
+              onProgress(progress);
+            }
+          },
+        } : {})
       }
-    }
+    );
 
     return data;
   },

@@ -19,7 +19,7 @@ interface UploadingFile {
 export function MessageInput({ parentMessageId, isThread = false, onMessageSent }: MessageInputProps) {
   const [content, setContent] = useState('');
   const [uploadingFile, setUploadingFile] = useState<UploadingFile | null>(null);
-  const { sendMessage, sendMessageWithFile } = useMessage();
+  const { sendMessage } = useMessage();
   const { currentChannel } = useChannel();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -41,22 +41,15 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
     if ((!content.trim() && !uploadingFile) || !currentChannel) return;
 
     try {
-      if (uploadingFile?.file) {
-        // Send message with file
-        console.log('sending message with file');
-        await sendMessageWithFile(
-          content,
-          uploadingFile.file,
-          (progress) => {
-            setUploadingFile(prev => prev ? { ...prev, progress } : null);
-          },
-          parentMessageId
-        );
-      } else {
-        // Send regular message
-        console.log('sending regular message');
-        await sendMessage(content, parentMessageId);
-      }
+      // Send message with or without file
+      await sendMessage(
+        content,
+        uploadingFile?.file,
+        uploadingFile ? (progress) => {
+          setUploadingFile(prev => prev ? { ...prev, progress } : null);
+        } : undefined,
+        parentMessageId
+      );
 
       // Clear state after successful send
       setContent('');

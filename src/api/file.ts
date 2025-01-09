@@ -1,11 +1,5 @@
 import axiosInstance from './axiosConfig';
-
-export interface UploadResponse {
-  url: string;
-  filename: string;
-  size: number;
-  type: string;
-}
+import type { FileUploadResponse } from '../types/file';
 
 export const fileApi = {
   // Upload a file and get back the URL
@@ -13,7 +7,7 @@ export const fileApi = {
     channelId: string, 
     file: File, 
     onProgress?: (progress: number) => void
-  ): Promise<UploadResponse> => {
+  ): Promise<FileUploadResponse> => {
     // Log type checks for the file
     if (!(file instanceof File)) {
       console.error('The provided file is not a valid File object.');
@@ -28,7 +22,7 @@ export const fileApi = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const { data } = await axiosInstance.post<UploadResponse>(
+    const { data } = await axiosInstance.post<FileUploadResponse>(
       `/api/channels/${channelId}/files`,
       formData,
       {
