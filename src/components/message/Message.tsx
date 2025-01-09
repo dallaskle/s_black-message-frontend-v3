@@ -1,6 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useMessage } from '../../contexts/MessageContext';
 import type { Message as MessageType } from '../../types/message';
+import { DocumentIcon, PhotoIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
+import { fileApi } from '../../api/file';
+import { FilePreview } from '../file/FilePreview';
 
 // Common emojis for quick reactions
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '🤔', '👀'];
@@ -8,6 +11,25 @@ const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '🤔', '👀'];
 interface MessageProps {
   message: MessageType;
   onThreadClick?: (messageId: string) => void;
+}
+
+function getFileIcon(fileType: string) {
+  if (fileType.startsWith('image/')) {
+    return <PhotoIcon className="w-5 h-5" />;
+  } else if (fileType.startsWith('video/')) {
+    return <VideoCameraIcon className="w-5 h-5" />;
+  }
+  return <DocumentIcon className="w-5 h-5" />;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B';
+  const kb = bytes / 1024;
+  if (kb < 1024) return kb.toFixed(1) + ' KB';
+  const mb = kb / 1024;
+  if (mb < 1024) return mb.toFixed(1) + ' MB';
+  const gb = mb / 1024;
+  return gb.toFixed(1) + ' GB';
 }
 
 export function Message({ message, onThreadClick }: MessageProps) {
@@ -212,6 +234,33 @@ export function Message({ message, onThreadClick }: MessageProps) {
 
       {/* Add reactions section */}
       {renderReactions()}
+
+      {message.file && (
+        <div className="mt-2">
+          <div className="flex items-center gap-2 p-2 bg-background-secondary rounded-lg max-w-fit">
+            {getFileIcon(message.file.file_type)}
+            <div className="flex flex-col">
+              <button
+                onClick={async () => {
+                  try {
+                    const url = await fileApi.getFileUrl(message.file!.id);
+                    window.open(url, '_blank');
+                  } catch (err) {
+                    console.error('Failed to get file URL:', err);
+                  }
+                }}
+                className="text-sm font-medium text-accent-primary hover:underline text-left"
+              >
+                {message.file.file_name}
+              </button>
+              <span className="text-xs text-text-secondary">
+                {formatFileSize(message.file.file_size)}
+              </span>
+            </div>
+          </div>
+          <FilePreview file={message.file} />
+        </div>
+      )}
     </div>
   );
-} 
+}

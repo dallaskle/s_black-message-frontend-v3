@@ -30,7 +30,7 @@ export class RealtimeService {
           table: 'messages',
           filter: `channel_id=eq.${channelId}`,
         },
-        async (payload: RealtimePostgresChangesPayload<Message>) => {
+        async (payload: RealtimePostgresChangesPayload<any>) => {
           try {
             // Fetch user information for the message
             const { data: userData } = await supabase
@@ -39,14 +39,41 @@ export class RealtimeService {
               .eq('id', payload.new.user_id)
               .single();
 
-            const messageWithName = {
+            // Fetch file information if it exists
+            const { data: fileData } = await supabase
+              .from('files')
+              .select('*')
+              .eq('message_id', payload.new.id)
+              .single();
+
+            // Get reaction data
+            const { data: reactionData } = await supabase
+              .from('reactions')
+              .select('emoji, user_id')
+              .eq('message_id', payload.new.id);
+
+            // Process reactions
+            const reactions: Record<string, number> = {};
+            const userReactions: string[] = [];
+            
+            reactionData?.forEach(reaction => {
+              reactions[reaction.emoji] = (reactions[reaction.emoji] || 0) + 1;
+              if (reaction.user_id === supabase.auth.user()?.id) {
+                userReactions.push(reaction.emoji);
+              }
+            });
+
+            const messageWithDetails = {
               ...payload.new,
-              name: userData?.name || 'Unknown User'
+              name: userData?.name || 'Unknown User',
+              file: fileData || undefined,
+              reactions,
+              userReactions
             } as Message;
 
             callback({
               eventType: payload.eventType,
-              message: messageWithName,
+              message: messageWithDetails,
             });
           } catch (error) {
             console.error('Error processing message change:', error);

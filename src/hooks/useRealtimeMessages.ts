@@ -16,7 +16,8 @@ export const useRealtimeMessages = (channelId: string | undefined) => {
             addMessage(message);
             break;
           case 'UPDATE':
-            updateMessage(message.id, message.content);
+            // For updates, we need to preserve the file information
+            updateMessage(message.id, message.content, message.file || undefined);
             break;
           case 'DELETE':
             deleteMessage(message.id);
@@ -25,11 +26,11 @@ export const useRealtimeMessages = (channelId: string | undefined) => {
       });
 
       // Subscribe to reactions
-      /*realtimeService.subscribeToReactions(channelId, ({ eventType, reaction }) => {
+      realtimeService.subscribeToReactions(channelId, ({ eventType, reaction }) => {
         if (reaction && reaction.message_id) {
           updateReactions(reaction.message_id);
         }
-      });*/
+      });
     } catch (error) {
       console.error('Error setting up realtime subscriptions:', error);
     }

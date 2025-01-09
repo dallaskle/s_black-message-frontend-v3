@@ -14,7 +14,6 @@ export const messageApi = {
   },
 
   createMessage: async (channelId: string, content: string, parentMessageId?: string) => {
-    console.log('parentMessageId:', parentMessageId);
     const { data } = await axiosInstance.post<Message>(
       `/api/channels/${channelId}/messages`,
       { content, parentMessageId }
@@ -45,6 +44,15 @@ export const messageApi = {
   },
 
   deleteMessage: async (messageId: string) => {
+    // First get the message to check if it has a file
+    const { data: message } = await axiosInstance.get<Message>(`/api/messages/${messageId}`);
+    
+    // If message has a file, delete it first
+    if (message.file) {
+      await axiosInstance.delete(`/api/files/${message.file.id}`);
+    }
+    
+    // Then delete the message
     await axiosInstance.delete(`/api/messages/${messageId}`);
   },
 

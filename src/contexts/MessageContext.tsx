@@ -1,20 +1,23 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { messageApi } from '../api/message';
 import { useChannel } from './ChannelContext';
-import type { Message } from '../types/message';
+import type { FileAttachment, Message } from '../types/message';
 import { reactionApi } from '../api/reaction';
+import { fileApi } from '../api/file';
 
 interface MessageContextType {
   messages: Message[];
   setMessages: (messages: Message[]) => void;
   isLoading: boolean;
   error: string | null;
-  sendMessage: (content: string, parentMessageId?: string) => Promise<void>;
-  updateMessage: (messageId: string, content: string) => Promise<void>;
+  sendMessage: (content: string, parentMessageId?: string, file?: File | null) => Promise<void>;
+  updateMessage: (messageId: string, content: string, file?: FileAttachment | undefined) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
   toggleReaction: (messageId: string, emoji: string) => Promise<void>;
   addMessage: (message: Message) => void;
   updateReactions: (messageId: string) => Promise<void>;
+  uploadProgress: Record<string, number>;
+  uploadErrors: Record<string, string>;
 }
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
@@ -32,6 +35,8 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { currentChannel } = useChannel();
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
 
   // Fetch messages for current channel
   useEffect(() => {
@@ -72,12 +77,18 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     fetchMessages();
   }, [currentChannel?.id]);
 
-  const sendMessage = useCallback(async (content: string, parentMessageId?: string) => {
+  const sendMessage = useCallback(async (
+    content: string,
+    parentMessageId?: string,
+    file?: File | null
+  ) => {
     if (!currentChannel?.id) return;
 
-    // Create optimistic message with the actual user's name
+    const tempId = `temp-${Date.now()}`;
+
+    // Create optimistic message
     const optimisticMessage = {
-      id: `temp-${Date.now()}`,
+      id: tempId,
       content,
       channel_id: currentChannel.id,
       parent_message_id: parentMessageId,
@@ -89,65 +100,74 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
       userReactions: []
     };
 
-    // Optimistically update UI
-    setMessages(prev => {
-      const newMessages = [...prev];
-      
-      // Add to main messages array
-      newMessages.push(optimisticMessage);
-      
-      // If this is a thread reply, update the parent's replies
-      if (parentMessageId) {
-        return newMessages.map(msg => {
-          if (msg.id === parentMessageId) {
-            return {
-              ...msg,
-              replies: [...(msg.replies || []), optimisticMessage]
-            };
-          }
-          return msg;
-        });
-      }
-      
-      return newMessages;
-    });
+    // Add to messages immediately
+    setMessages(prev => [...prev, optimisticMessage]);
 
     try {
-      // Make API call
+      // Create the message first
       const savedMessage = await messageApi.createMessage(
-        currentChannel.id, 
+        currentChannel.id,
         content,
         parentMessageId
       );
 
-      // Replace optimistic message with saved message
-      setMessages(prev => prev.map(msg => {
-        if (msg.id === optimisticMessage.id) {
-          return savedMessage;
+      let fileData = null;
+      if (file) {
+        try {
+          setUploadProgress(prev => ({ ...prev, [tempId]: 0 }));
+          fileData = await fileApi.uploadFile(
+            currentChannel.id,
+            savedMessage.id,
+            file,
+            (progress) => {
+              setUploadProgress(prev => ({ ...prev, [tempId]: progress }));
+            }
+          );
+        } catch (err) {
+          setUploadErrors(prev => ({
+            ...prev,
+            [tempId]: err instanceof Error ? err.message : 'Failed to upload file'
+          }));
+          throw err;
+        } finally {
+          setUploadProgress(prev => {
+            const { [tempId]: _, ...rest } = prev;
+            return rest;
+          });
+          setUploadErrors(prev => {
+            const { [tempId]: _, ...rest } = prev;
+            return rest;
+          });
         }
-        if (msg.id === parentMessageId) {
-          return {
-            ...msg,
-            replies: (msg.replies || []).map(reply => 
-              reply.id === optimisticMessage.id ? savedMessage : reply
-            )
-          };
-        }
-        return msg;
-      }));
+      }
+
+      // Update message with file data
+      const finalMessage = {
+        ...savedMessage,
+        file: fileData || undefined
+      };
+
+      // Replace optimistic message
+      setMessages(prev => prev.map(msg => 
+        msg.id === tempId ? finalMessage : msg
+      ));
 
     } catch (err) {
       // Remove optimistic message on error
-      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
-      setError(err instanceof Error ? err.message : 'Failed to send message');
+      setMessages(prev => prev.filter(msg => msg.id !== tempId));
+      throw err;
     }
   }, [currentChannel?.id, user]);
 
-  const updateMessage = useCallback(async (messageId: string, content: string) => {
+  const updateMessage = useCallback(async (
+    messageId: string, 
+    content: string,
+    file?: FileAttachment
+  ) => {
     try {
       const updatedMessage = await messageApi.updateMessage(messageId, content);
       setMessages(prev => prev.map(msg => 
-        msg.id === messageId ? updatedMessage : msg
+        msg.id === messageId ? { ...updatedMessage, file: file || msg.file } : msg
       ));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update message');
@@ -395,7 +415,9 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     deleteMessage,
     toggleReaction,
     addMessage,
-    updateReactions
+    updateReactions,
+    uploadProgress,
+    uploadErrors
   };
 
   return (
