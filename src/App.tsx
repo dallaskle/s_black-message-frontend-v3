@@ -8,6 +8,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/routes/ProtectedRoute';
 import { PublicRoute } from './components/routes/PublicRoute';
 import Spinner from './components/ui/Spinner';
+import { useAuth } from './contexts/AuthContext';
 
 // Create a separate component for the root route
 function RootRoute() {
