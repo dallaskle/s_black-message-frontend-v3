@@ -18,6 +18,11 @@ export const messageApi = {
       `/api/channels/${channelId}/messages`,
       { params }
     );
+    console.log('Raw response from backend:', data);
+    console.log('Messages with files:', data.map(m => ({
+      messageId: m.id,
+      files: m.files
+    })));
     return data;
   },
 

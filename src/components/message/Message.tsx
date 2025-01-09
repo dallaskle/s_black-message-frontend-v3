@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useMessage } from '../../contexts/MessageContext';
 import type { Message as MessageType } from '../../types/message';
+import { FileData } from '../../types/file';
 
 // Common emojis for quick reactions
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '🤔', '👀'];
@@ -141,6 +142,44 @@ export function Message({ message, onThreadClick }: MessageProps) {
     );
   };
 
+  // Add this function to render files
+  const renderFiles = (files?: FileData[]) => {
+    if (!files || files.length === 0) return null;
+
+    return (
+      <div className="mt-2 flex flex-wrap gap-2">
+        {files.filter(file => file != null).map((file) => {
+          const isImage = file?.mime_type?.startsWith('image/');
+          
+          return (
+            <a
+              key={file.id}
+              href={file.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center p-2 bg-background-secondary rounded-lg hover:bg-background-secondary/80"
+            >
+              {isImage ? (
+                <img 
+                  src={file.thumbnail_url || file.file_url} 
+                  alt={file.file_name}
+                  className="max-w-[200px] max-h-[200px] rounded-lg"
+                />
+              ) : (
+                <>
+                  <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="text-sm text-text-primary">{file.file_name}</span>
+                </>
+              )}
+            </a>
+          );
+        })}
+      </div>
+    );
+  };
+
   if (isEditing) {
     return (
       <div className="group px-4 py-2 hover:bg-background-secondary">
@@ -199,6 +238,9 @@ export function Message({ message, onThreadClick }: MessageProps) {
         </div>
       </div>
       <p className="mt-1 text-text-primary whitespace-pre-wrap font-thin">{message.content}</p>
+      
+      {/* Add files display */}
+      {renderFiles(message.files)}
       
       {/* Thread info */}
       {threadInfo && (

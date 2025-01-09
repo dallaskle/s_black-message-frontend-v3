@@ -1,13 +1,16 @@
+import { FileData } from './file';
+
 export interface Message {
   id: string;
-  content: string;
-  user_id: string;
   channel_id: string;
-  parent_message_id?: string;
+  user_id: string;
+  content: string;
+  parent_message_id: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   name: string;
-  reactions: Record<string, number>;
+  reactions: { [emoji: string]: number };
   userReactions: string[];
+  files?: FileData[];
   replies?: Message[];
 } 

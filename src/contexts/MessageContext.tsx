@@ -81,25 +81,24 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     if (!currentChannel?.id) return;
 
     // Create optimistic message
-    const optimisticMessage = {
+    const optimisticMessage: Message = {
       id: `temp-${Date.now()}`,
       content,
       channel_id: currentChannel.id,
-      parent_message_id: parentMessageId,
+      parent_message_id: parentMessageId || null,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      updated_at: null,
       user_id: user?.id || 'current-user',
       name: user?.name || 'User',
       reactions: {},
       userReactions: [],
-      ...(file && {
-        file: {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          url: URL.createObjectURL(file)
-        }
-      })
+      files: file ? [{
+        id: 'temp',
+        file_url: URL.createObjectURL(file),
+        file_name: file.name,
+        file_size: file.size,
+        mime_type: file.type,
+      }] : []
     };
 
     // Add optimistic message to UI

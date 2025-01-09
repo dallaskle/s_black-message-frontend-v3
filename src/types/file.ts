@@ -10,6 +10,15 @@ export interface File {
   uploaded_at: string;
 }
 
+export interface FileData {
+    id: string;
+    file_url: string;
+    file_name: string;
+    file_size: number;
+    mime_type: string;
+    thumbnail_url?: string;
+  }
+
 // Response type for file upload
 export interface FileUploadResponse {
   url: string;

@@ -11,15 +11,21 @@ export const useRealtimeMessages = (channelId: string | undefined) => {
     try {
       // Subscribe to messages
       realtimeService.subscribeToMessages(channelId, ({ eventType, message }) => {
+        // Ensure message has files property
+        const messageWithFiles = {
+          ...message,
+          files: message.files || []
+        };
+
         switch (eventType) {
           case 'INSERT':
-            addMessage(message);
+            addMessage(messageWithFiles);
             break;
           case 'UPDATE':
-            updateMessage(message.id, message.content);
+            updateMessage(messageWithFiles.id, messageWithFiles.content);
             break;
           case 'DELETE':
-            deleteMessage(message.id);
+            deleteMessage(messageWithFiles.id);
             break;
         }
       });

@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import type { Message } from '../types/message';
+import type { FileData } from '../types/file';
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import type { Reaction } from '../types/reaction';
 
@@ -34,20 +35,42 @@ export class RealtimeService {
           try {
             if (!payload.new || !('user_id' in payload.new)) return;
             
+            // Fetch complete message data including files
+            const { data: messageData } = await supabase
+              .from('messages')
+              .select(`
+                *,
+                files:message_files (
+                  file:files (
+                    id,
+                    file_url,
+                    file_name,
+                    file_size,
+                    mime_type,
+                    thumbnail_url
+                  )
+                )
+              `)
+              .eq('id', payload.new.id)
+              .single();
+
             const { data: userData } = await supabase
               .from('users')
               .select('name')
               .eq('id', payload.new.user_id)
               .single();
 
-            const messageWithName = {
-              ...payload.new,
-              name: userData?.name || 'Unknown User'
+            const messageWithDetails = {
+              ...messageData,
+              name: userData?.name || 'Unknown User',
+              files: messageData?.files?.map((f: { file: FileData }) => f.file) || [],
+              reactions: {},
+              userReactions: []
             } as Message;
 
             callback({
               eventType: payload.eventType,
-              message: messageWithName,
+              message: messageWithDetails,
             });
           } catch (error) {
             console.error('Error processing message change:', error);
