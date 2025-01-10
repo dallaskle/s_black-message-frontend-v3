@@ -35,7 +35,7 @@ export class RealtimeService {
           try {
             if (!payload.new || !('user_id' in payload.new)) return;
             
-            // Fetch complete message data including files
+            // Fetch complete message data including files and thread info
             const { data: messageData } = await supabase
               .from('messages')
               .select(`
@@ -60,12 +60,24 @@ export class RealtimeService {
               .eq('id', payload.new.user_id)
               .single();
 
+            // If this is a thread message, fetch the parent message's thread
+            let threadMessages = [];
+            if (messageData.parent_message_id) {
+              const { data: replies } = await supabase
+                .from('messages')
+                .select('*')
+                .eq('parent_message_id', messageData.parent_message_id)
+                .order('created_at', { ascending: true });
+              threadMessages = replies || [];
+            }
+
             const messageWithDetails = {
               ...messageData,
               name: userData?.name || 'Unknown User',
               files: messageData?.files?.map((f: { file: FileData }) => f.file) || [],
               reactions: {},
-              userReactions: []
+              userReactions: [],
+              replies: threadMessages
             } as Message;
 
             callback({
@@ -77,17 +89,7 @@ export class RealtimeService {
           }
         }
       )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log(`Subscribed to messages for channel ${channelId}`);
-        } else if (status === 'CLOSED') {
-          console.log(`Subscription closed for messages in channel ${channelId}`);
-          delete this.subscriptions[key];
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error(`Error in message subscription for channel ${channelId}`);
-          this.unsubscribe(channelId);
-        }
-      });
+      .subscribe();
   }
 
   subscribeToReactions(channelId: string, callback: ReactionCallback) {

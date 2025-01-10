@@ -44,20 +44,20 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
         // Get all channel messages first
         const channelMessages = await messageApi.getChannelMessages(currentChannel.id);
         
-        // Find messages that have replies (are thread parents)
-        const threadParents = channelMessages.filter(msg => 
-          channelMessages.some(reply => reply.parent_message_id === msg.id)
-        );
-        
-        // Fetch thread messages for each parent
+        // Get all thread messages for messages that have replies
         const messagesWithThreads = await Promise.all(
           channelMessages.map(async (message) => {
-            if (threadParents.some(parent => parent.id === message.id)) {
-              // This is a thread parent, fetch its thread messages
+            if (messages.some(m => m.parent_message_id === message.id)) {
               const threadMessages = await messageApi.getThreadMessages(message.id);
-              return { ...message, replies: threadMessages };
+              return {
+                ...message,
+                replies: threadMessages
+              };
             }
-            return message;
+            return {
+              ...message,
+              replies: []
+            };
           })
         );
 
@@ -301,33 +301,25 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
         (m.id.startsWith('temp-') && m.content === message.content));
 
       if (messageExists) {
-        // If message exists, just update it (in case server added more data)
+        // If message exists, update it
         return prev.map(m => {
           if (m.id === message.id || 
             (m.id.startsWith('temp-') && m.content === message.content)) {
             return {
               ...message,
-              // Keep existing name if the new message doesn't have one
               name: message.name || m.name
             };
           }
-          return m;
-        });
-      }
-
-      // If message is a reply...
-      if (message.parent_message_id) {
-        return prev.map(msg => {
-          if (msg.id === message.parent_message_id) {
-            const replyExists = msg.replies?.some(r => 
+          // Also check replies
+          if (m.replies) {
+            const replyExists = m.replies.some(r => 
               r.id === message.id || 
               (r.id.startsWith('temp-') && r.content === message.content)
             );
-
             if (replyExists) {
               return {
-                ...msg,
-                replies: msg.replies?.map(r => 
+                ...m,
+                replies: m.replies.map(r => 
                   (r.id === message.id || 
                     (r.id.startsWith('temp-') && r.content === message.content))
                     ? { ...message, name: message.name || r.name }
@@ -335,17 +327,27 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
                 )
               };
             }
+          }
+          return m;
+        });
+      }
 
+      // If message is a reply
+      if (message.parent_message_id) {
+        return prev.map(msg => {
+          if (msg.id === message.parent_message_id) {
             return {
               ...msg,
-              replies: [...(msg.replies || []), message]
+              replies: [...(msg.replies || []), message].sort((a, b) => 
+                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+              )
             };
           }
           return msg;
         });
       }
 
-      // Otherwise add to main messages array
+      // Add new message to main messages array
       return [...prev, message];
     });
   }, []);
