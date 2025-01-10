@@ -1,5 +1,5 @@
 import { useState, FormEvent, useRef } from 'react';
-import { useMessage } from '../../contexts/MessageContext';
+import { useMessage } from '../../contexts/Message/MessageContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { FileUploadButton } from '../file/FileUploadButton';
 import { FileUploadProgress } from '../file/FileUploadProgress';

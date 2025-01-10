@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { authApi } from '../api/auth';
 import { jwtDecode } from 'jwt-decode';
 import { useWorkspace } from './WorkspaceContext';
-import { useMessage } from './MessageContext';
+import { useMessage } from './Message/MessageContext';
 import axiosInstance from '../api/axiosConfig';
 
 interface User {

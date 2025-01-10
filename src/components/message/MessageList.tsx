@@ -1,4 +1,4 @@
-import { useMessage } from '../../contexts/MessageContext';
+import { useMessage } from '../../contexts/Message/MessageContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';

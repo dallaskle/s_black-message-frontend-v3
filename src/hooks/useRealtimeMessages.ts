@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useMessage } from '../contexts/MessageContext';
+import { useMessage } from '../contexts/Message/MessageContext';
 import { realtimeService } from '../lib/realtimeService';
 
 export const useRealtimeMessages = (channelId: string | undefined) => {

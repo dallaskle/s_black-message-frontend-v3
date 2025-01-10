@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { realtimeService } from '../lib/realtimeService';
-import { useMessage } from '../contexts/MessageContext';
+import { useMessage } from '../contexts/Message/MessageContext';
 
 export function useRealtimeReactions(channelId: string | undefined) {
   const { updateReactions } = useMessage();
