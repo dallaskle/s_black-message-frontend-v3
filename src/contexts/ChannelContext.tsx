@@ -1,3 +1,4 @@
+/** @deprecated Use WorkspaceContext instead. This will be removed in a future version. */
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { channelApi } from '../api/channel';
 import { useWorkspace } from './WorkspaceContext';

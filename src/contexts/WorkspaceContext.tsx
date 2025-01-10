@@ -1,11 +1,14 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { workspaceApi } from '../api/workspace';
-import type { WorkspaceWithChannels } from '../types/workspace'
+import type { WorkspaceWithChannels } from '../types/workspace';
+import type { Channel } from '../types/channel';
 
 interface WorkspaceContextType {
   workspaces: WorkspaceWithChannels[];
   currentWorkspace: WorkspaceWithChannels | null;
   setCurrentWorkspaceByUrl: (workspace_url: string) => void;
+  currentChannel: Channel | null;
+  setCurrentChannel: (channel: Channel | null) => void;
   isLoading: boolean;
   error: string | null;
   refreshWorkspaces: () => Promise<void>;
@@ -16,6 +19,7 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [workspaces, setWorkspaces] = useState<WorkspaceWithChannels[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<WorkspaceWithChannels | null>(null);
+  const [currentChannel, setCurrentChannel] = useState<Channel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +36,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       
       setError(null);
     } catch (err) {
-      setError('Failed to fetch workspaces');
+      setError('Failed to fetch workspaces and channels');
       console.error('Error fetching workspaces:', err);
     } finally {
       setIsLoading(false);
@@ -41,11 +45,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   // Initial load
   useEffect(() => {
-    workspaceApi.getWorkspaceWithChannels().then((data: WorkspaceWithChannels[]) => {
-      console.log('Workspace with channels:', data);
-    });
     refreshWorkspaces();
-  }, []); // Remove currentWorkspace from dependencies
+  }, []);
+
+  // Reset current channel when workspace changes
+  useEffect(() => {
+    setCurrentChannel(null);
+  }, [currentWorkspace?.id]);
 
   const setCurrentWorkspaceByUrl = (workspace_url: string) => {
     if (!workspace_url) {
@@ -64,6 +70,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         workspaces,
         currentWorkspace,
         setCurrentWorkspaceByUrl,
+        currentChannel,
+        setCurrentChannel,
         isLoading,
         error,
         refreshWorkspaces,
