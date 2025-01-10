@@ -9,15 +9,21 @@ export interface RegisterCredentials {
   password: string;
 }
 
-export interface AuthResponse {
+interface BaseAuthResponse {
   user: {
     id: string;
     email: string;
     name: string;
   };
-  session?: {
+}
+
+export interface LoginAuthResponse extends BaseAuthResponse {
+  session: {
     access_token: string;
     refresh_token: string;
   };
-  accessToken?: string; // For refresh token response
+}
+
+export interface RefreshAuthResponse extends BaseAuthResponse {
+  accessToken: string;
 } 
