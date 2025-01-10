@@ -234,7 +234,7 @@ export function useAuth() {
 
 export function useLogout() {
   const { logout } = useAuth();
-  const { setCurrentWorkspace } = useWorkspace();
+  const { setCurrentWorkspaceByUrl } = useWorkspace();
   const { setCurrentChannel } = useChannel();
   const { setMessages } = useMessage();
 
@@ -242,7 +242,7 @@ export function useLogout() {
     try {
       await logout();
     } finally {
-      setCurrentWorkspace(null as any);
+      setCurrentWorkspaceByUrl(null as any);
       setCurrentChannel(null);
       setMessages([]);
     }

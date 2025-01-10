@@ -2,7 +2,7 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 import AddWorkspaceModal from './AddWorkspaceModal';
 
 export function WorkspaceList() {
-  const { workspaces, currentWorkspace, setCurrentWorkspace, isLoading, error } = useWorkspace();
+  const { workspaces, currentWorkspace, setCurrentWorkspaceByUrl, isLoading, error } = useWorkspace();
 
   if (isLoading) {
     return (
@@ -40,7 +40,7 @@ export function WorkspaceList() {
         {workspaces.map((workspace) => (
           <li key={workspace.id}>
             <button
-              onClick={() => setCurrentWorkspace(workspace)}
+              onClick={() => setCurrentWorkspaceByUrl(workspace.workspace_url)}
               className={`w-full px-4 py-2 text-left transition-colors ${
                 currentWorkspace?.id === workspace.id
                   ? 'bg-accent-primary/10 text-text-primary'

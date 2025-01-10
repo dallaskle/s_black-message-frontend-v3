@@ -1,7 +1,13 @@
 import axiosInstance from './axiosConfig';
-import type { Workspace, WorkspaceMember } from '../types/workspace'
+import type { Workspace, WorkspaceMember, WorkspaceWithChannels } from '../types/workspace'
 
 export const workspaceApi = {
+  // Get workspace with channels
+  getWorkspaceWithChannels: async () => {
+    const { data } = await axiosInstance.get<WorkspaceWithChannels[]>('/api/workspaces/channels');
+    return data;
+  },
+
   // Get all workspaces for the current user
   getUserWorkspaces: async () => {
     const { data } = await axiosInstance.get<Workspace[]>('/api/workspaces');
