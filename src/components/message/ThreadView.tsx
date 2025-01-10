@@ -2,7 +2,7 @@ import { useMessage } from '../../contexts/MessageContext';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
 import { useMemo, useRef, useEffect } from 'react';
-import { useChannel } from '../../contexts/ChannelContext';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 interface ThreadViewProps {
   parentMessageId: string;
@@ -11,7 +11,7 @@ interface ThreadViewProps {
 
 export function ThreadView({ parentMessageId, onClose }: ThreadViewProps) {
   const { messages } = useMessage();
-  const { currentChannel } = useChannel();
+  const { currentWorkspace } = useWorkspace();
   const threadEndRef = useRef<HTMLDivElement>(null);
 
   const threadMessages = useMemo(() => {
@@ -29,7 +29,7 @@ export function ThreadView({ parentMessageId, onClose }: ThreadViewProps) {
     threadEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  if (!currentChannel) return null;
+  if (!currentWorkspace) return null;
 
   return (
     <div className="flex flex-col h-full border-l border-text-secondary/20">

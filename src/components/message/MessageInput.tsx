@@ -1,6 +1,6 @@
 import { useState, FormEvent, useRef } from 'react';
 import { useMessage } from '../../contexts/MessageContext';
-import { useChannel } from '../../contexts/ChannelContext';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { FileUploadButton } from '../file/FileUploadButton';
 import { FileUploadProgress } from '../file/FileUploadProgress';
 
@@ -20,7 +20,7 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
   const [content, setContent] = useState('');
   const [uploadingFile, setUploadingFile] = useState<UploadingFile | null>(null);
   const { sendMessage } = useMessage();
-  const { currentChannel } = useChannel();
+  const { currentWorkspace } = useWorkspace();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (file: File) => {
@@ -38,7 +38,7 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if ((!content.trim() && !uploadingFile) || !currentChannel) return;
+    if ((!content.trim() && !uploadingFile) || !currentWorkspace) return;
 
     try {
       // Send message with or without file
@@ -68,7 +68,7 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
     }
   };
 
-  if (!currentChannel) {
+  if (!currentWorkspace) {
     return null;
   }
 
@@ -103,7 +103,7 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
               handleSubmit(e);
             }
           }}
-          placeholder={isThread ? 'Reply in thread...' : `Message #${currentChannel.name}`}
+          placeholder={isThread ? 'Reply in thread...' : `Message #${currentWorkspace.name}`}
           className="flex-1 bg-background-primary border border-text-secondary/20 rounded-lg 
             px-4 py-2 text-text-primary placeholder:text-text-secondary focus:outline-none 
             focus:border-accent-primary"

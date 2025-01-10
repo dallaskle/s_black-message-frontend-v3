@@ -11,7 +11,6 @@ import { useAuth, useLogout } from '../../contexts/AuthContext';
 import Spinner from '../../components/ui/Spinner';
 import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
 import { useRealtimeReactions } from '../../hooks/useRealtimeReactions';
-import { ChannelProvider } from '../../contexts/ChannelContext';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -211,11 +210,9 @@ export function DashboardPage() {
 
   return (
     <WorkspaceProvider>
-      <ChannelProvider>
         <MessageProvider user={user}>
           <DashboardContent />
         </MessageProvider>
-      </ChannelProvider>
     </WorkspaceProvider>
   );
 }

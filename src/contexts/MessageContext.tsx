@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { messageApi } from '../api/message';
-import { useChannel } from './ChannelContext';
+import { useWorkspace } from './WorkspaceContext';
 import type { Message } from '../types/message';
 import { reactionApi } from '../api/reaction';
 
@@ -32,7 +32,7 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { currentChannel } = useChannel();
+  const { currentChannel } = useWorkspace();
 
   // Fetch messages for current channel
   useEffect(() => {
