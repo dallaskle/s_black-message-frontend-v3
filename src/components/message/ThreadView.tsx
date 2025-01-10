@@ -1,7 +1,7 @@
 import { useMessage } from '../../contexts/Message/MessageContext';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
-import { useMemo, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 interface ThreadViewProps {
@@ -10,20 +10,24 @@ interface ThreadViewProps {
 }
 
 export function ThreadView({ parentMessageId, onClose }: ThreadViewProps) {
-  const { messages } = useMessage();
+  const { messages, getThreadMessages, threadMessages, setThreadMessages } = useMessage();
   const { currentWorkspace } = useWorkspace();
   const threadEndRef = useRef<HTMLDivElement>(null);
 
-  const threadMessages = useMemo(() => {
-    const parent = messages.find(m => m.id === parentMessageId);
-    if (!parent) return [];
+  // Find the parent message
+  const parentMessage = messages.find(message => message.id === parentMessageId);
+
+  console.log(threadMessages);
+
+  useEffect(() => {
+    setThreadMessages([]);
+    getThreadMessages(parentMessageId);
     
-    const replies = messages.filter(m => m.parent_message_id === parentMessageId);
-    
-    return [parent, ...replies].sort((a, b) => {
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-    });
-  }, [messages, parentMessageId]);
+    // Cleanup function
+    return () => {
+      setThreadMessages([]);
+    };
+  }, [parentMessageId]);
 
   const scrollToBottom = () => {
     threadEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -44,6 +48,13 @@ export function ThreadView({ parentMessageId, onClose }: ThreadViewProps) {
       </div>
       
       <div className="flex-1 overflow-y-auto">
+        {parentMessage && (
+          <Message 
+            key={parentMessage.id} 
+            message={parentMessage}
+            isInThread={true}
+          />
+        )}
         {threadMessages.map(message => (
           <Message 
             key={message.id} 

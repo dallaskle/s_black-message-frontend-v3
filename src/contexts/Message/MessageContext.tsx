@@ -8,6 +8,8 @@ import { createSendMessage } from './messageServices/sendMessage';
 interface MessageContextType {
   messages: Message[];
   threadMessages: Message[];
+  setThreadMessages: (messages: Message[]) => void;
+  getThreadMessages: (messageId: string) => Promise<void>;
   setMessages: (messages: Message[]) => void;
   isLoading: boolean;
   error: string | null;
@@ -331,9 +333,16 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     }
   }, [messages]);
 
+  const getThreadMessages = useCallback(async (messageId: string) => {
+    const threadMessages = await messageApi.getThreadMessages(messageId);
+    setThreadMessages(threadMessages);
+  }, []);
+
   const value = {
     messages,
     threadMessages,
+    setThreadMessages,
+    getThreadMessages,
     setMessages,
     isLoading,
     error,
