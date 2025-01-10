@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useChannel } from '../../contexts/ChannelContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Plus } from 'lucide-react';
 import AddChannelModal from './AddChannelModal';
@@ -8,8 +7,7 @@ import AddDMModal from './AddDMModal';
 export function ChannelList() {
   const [isAddChannelOpen, setIsAddChannelOpen] = useState(false);
   const [isAddDMOpen, setIsAddDMOpen] = useState(false);
-  const { channels, currentChannel, setCurrentChannel, isLoading, error } = useChannel();
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, currentChannel, setCurrentChannel, isLoading, error } = useWorkspace();
 
   if (!currentWorkspace) {
     return (
@@ -66,8 +64,8 @@ export function ChannelList() {
   }
 
   // Separate channels by type
-  const regularChannels = channels.filter(c => c.type === 'channel');
-  const dmChannels = channels.filter(c => c.type === 'dm');
+  const regularChannels = currentWorkspace?.channels.filter(c => c.type === 'channel') || [];
+  const dmChannels = currentWorkspace?.channels.filter(c => c.type === 'dm') || [];
 
   return (
     <div className="space-y-6">

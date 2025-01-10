@@ -1,10 +1,6 @@
 import axiosInstance from './axiosConfig';
-import type { LoginCredentials, AuthResponse } from '../types/auth';
-
-interface RefreshTokenResponse {
-  user: User;
-  accessToken: string;
-}
+import type { LoginCredentials, LoginAuthResponse, RefreshAuthResponse } from '../types/auth';
+import type { User } from '../types/User';
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
@@ -20,11 +16,17 @@ const processQueue = (error: any = null, token: string | null = null) => {
   refreshSubscribers = [];
 };
 
-export const authApi = {
+interface AuthApi {
+  login: (credentials: LoginCredentials) => Promise<LoginAuthResponse>;
+  refreshToken: () => Promise<RefreshAuthResponse | null>;
+  logout: () => Promise<void>;
+}
+
+export const authApi: AuthApi = {
   login: async (credentials: LoginCredentials) => {
-    const { data } = await axiosInstance.post<AuthResponse>('/auth/login', credentials);
+    const { data } = await axiosInstance.post<LoginAuthResponse>('/auth/login', credentials);
     
-    if (data.session?.access_token) {
+    if (data.session.access_token) {
       axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.session.access_token}`;
     }
     
@@ -47,7 +49,7 @@ export const authApi = {
     isRefreshing = true;
 
     try {
-      const { data } = await axiosInstance.post<RefreshTokenResponse>('/auth/refresh-token');
+      const { data } = await axiosInstance.post<RefreshAuthResponse>('/auth/refresh-token');
       
       if (!data || !data.accessToken) {
         delete axiosInstance.defaults.headers.common.Authorization;

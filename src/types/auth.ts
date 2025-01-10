@@ -1,3 +1,5 @@
+import { User } from "./User";
+
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -9,15 +11,18 @@ export interface RegisterCredentials {
   password: string;
 }
 
-export interface AuthResponse {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  };
-  session?: {
+interface BaseAuthResponse {
+  user: User;
+}
+
+export interface LoginAuthResponse extends BaseAuthResponse {
+  session: {
     access_token: string;
     refresh_token: string;
   };
-  accessToken?: string; // For refresh token response
+}
+
+export interface RefreshAuthResponse {
+  accessToken: string;
+  user: User | null;
 } 

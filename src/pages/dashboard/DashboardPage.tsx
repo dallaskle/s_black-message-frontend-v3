@@ -4,10 +4,8 @@ import { WorkspaceList } from '../../components/workspace/WorkspaceList';
 import { ChannelList } from '../../components/channel/ChannelList';
 import { MessageList } from '../../components/message/MessageList';
 import { WorkspaceProvider } from '../../contexts/WorkspaceContext';
-import { ChannelProvider } from '../../contexts/ChannelContext';
-import { MessageProvider } from '../../contexts/MessageContext';
+import { MessageProvider } from '../../contexts/Message/MessageContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { useChannel } from '../../contexts/ChannelContext';
 import { useState } from 'react';
 import { useAuth, useLogout } from '../../contexts/AuthContext';
 import Spinner from '../../components/ui/Spinner';
@@ -16,8 +14,7 @@ import { useRealtimeReactions } from '../../hooks/useRealtimeReactions';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
-  const { currentWorkspace } = useWorkspace();
-  const { currentChannel } = useChannel();
+  const { currentWorkspace, currentChannel } = useWorkspace();
 
   const getHeaderTitle = () => {
     if (currentChannel) {
@@ -98,7 +95,7 @@ function UserInfo() {
 function DashboardContent() {
   const [workspaceWidth, setWorkspaceWidth] = useState(240);
   const [channelWidth, setChannelWidth] = useState(240);
-  const { currentChannel } = useChannel();
+  const { currentChannel } = useWorkspace();
 
   useRealtimeMessages(currentChannel?.id);
   useRealtimeReactions(currentChannel?.id);
@@ -213,11 +210,9 @@ export function DashboardPage() {
 
   return (
     <WorkspaceProvider>
-      <ChannelProvider>
         <MessageProvider user={user}>
           <DashboardContent />
         </MessageProvider>
-      </ChannelProvider>
     </WorkspaceProvider>
   );
 }

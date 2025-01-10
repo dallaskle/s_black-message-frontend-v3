@@ -6,7 +6,6 @@ import { Label } from '../ui/label';
 import { channelApi } from '../../api/channel';
 import Spinner from '../ui/Spinner';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { useChannel } from '../../contexts/ChannelContext';
 
 interface AddDMModalProps {
   isOpen: boolean;
@@ -17,8 +16,7 @@ const AddDMModal = ({ isOpen, onClose }: AddDMModalProps) => {
   const [userId, setUserId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { currentWorkspace } = useWorkspace();
-  const { refreshChannels } = useChannel();
+  const { currentWorkspace, refreshWorkspaces } = useWorkspace();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +27,7 @@ const AddDMModal = ({ isOpen, onClose }: AddDMModalProps) => {
     
     try {
       await channelApi.createDM(currentWorkspace.id, userId.trim());
-      await refreshChannels();
+      await refreshWorkspaces();
       handleClose();
     } catch (error: any) {
       setError(error.response?.data?.message || 'Failed to create DM');

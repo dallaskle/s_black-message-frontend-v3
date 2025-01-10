@@ -6,7 +6,6 @@ import { Label } from '../ui/label';
 import { channelApi } from '../../api/channel';
 import Spinner from '../ui/Spinner';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { useChannel } from '../../contexts/ChannelContext';
 
 interface AddChannelModalProps {
   isOpen: boolean;
@@ -19,8 +18,7 @@ const AddChannelModal = ({ isOpen, onClose }: AddChannelModalProps) => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { currentWorkspace } = useWorkspace();
-  const { refreshChannels } = useChannel();
+  const { currentWorkspace, refreshWorkspaces } = useWorkspace();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +34,7 @@ const AddChannelModal = ({ isOpen, onClose }: AddChannelModalProps) => {
         is_private: isPrivate
       });
       
-      await refreshChannels();
+      await refreshWorkspaces();
       handleClose();
     } catch (error: any) {
       setError(error.response?.data?.message || 'Failed to create channel');

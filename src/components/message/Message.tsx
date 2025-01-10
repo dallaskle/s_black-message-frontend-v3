@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useMessage } from '../../contexts/MessageContext';
+import { useMessage } from '../../contexts/Message/MessageContext';
 import type { Message as MessageType } from '../../types/message';
 import { FileData } from '../../types/file';
 

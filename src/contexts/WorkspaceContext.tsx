@@ -1,12 +1,14 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { workspaceApi } from '../api/workspace';
-import type { Workspace } from '../types/workspace'
+import type { WorkspaceWithChannels } from '../types/workspace';
+import type { Channel } from '../types/channel';
 
 interface WorkspaceContextType {
-  workspaces: Workspace[];
-  currentWorkspace: Workspace | null;
-  setCurrentWorkspace: (workspace: Workspace) => void;
+  workspaces: WorkspaceWithChannels[];
+  currentWorkspace: WorkspaceWithChannels | null;
   setCurrentWorkspaceByUrl: (workspace_url: string) => void;
+  currentChannel: Channel | null;
+  setCurrentChannel: (channel: Channel | null) => void;
   isLoading: boolean;
   error: string | null;
   refreshWorkspaces: () => Promise<void>;
@@ -15,15 +17,16 @@ interface WorkspaceContextType {
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
+  const [workspaces, setWorkspaces] = useState<WorkspaceWithChannels[]>([]);
+  const [currentWorkspace, setCurrentWorkspace] = useState<WorkspaceWithChannels | null>(null);
+  const [currentChannel, setCurrentChannel] = useState<Channel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refreshWorkspaces = async () => {
     setIsLoading(true);
     try {
-      const data = await workspaceApi.getUserWorkspaces();
+      const data = await workspaceApi.getWorkspaceWithChannels();
       setWorkspaces(data);
       
       // Only set the first workspace if we have no workspaces loaded yet
@@ -33,7 +36,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       
       setError(null);
     } catch (err) {
-      setError('Failed to fetch workspaces');
+      setError('Failed to fetch workspaces and channels');
       console.error('Error fetching workspaces:', err);
     } finally {
       setIsLoading(false);
@@ -43,9 +46,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   // Initial load
   useEffect(() => {
     refreshWorkspaces();
-  }, []); // Remove currentWorkspace from dependencies
+  }, []);
+
+  // Reset current channel when workspace changes
+  useEffect(() => {
+    setCurrentChannel(null);
+  }, [currentWorkspace?.id]);
 
   const setCurrentWorkspaceByUrl = (workspace_url: string) => {
+    if (!workspace_url) {
+      setCurrentWorkspace(null);
+      return;
+    }
     const workspace = workspaces.find(w => w.workspace_url === workspace_url);
     if (workspace) {
       setCurrentWorkspace(workspace);
@@ -57,8 +69,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       value={{
         workspaces,
         currentWorkspace,
-        setCurrentWorkspace,
         setCurrentWorkspaceByUrl,
+        currentChannel,
+        setCurrentChannel,
         isLoading,
         error,
         refreshWorkspaces,

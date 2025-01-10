@@ -1,3 +1,5 @@
+import { Channel } from "./channel";
+
 export interface Workspace {
   id: string;
   name: string;
@@ -16,3 +18,7 @@ export interface WorkspaceMember {
   description: string | null;
   joined_at: string;
 } 
+
+export interface WorkspaceWithChannels extends Workspace {
+  channels: Channel[];
+}

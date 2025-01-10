@@ -1,5 +1,4 @@
-import { useMessage } from '../../contexts/MessageContext';
-import { useChannel } from '../../contexts/ChannelContext';
+import { useMessage } from '../../contexts/Message/MessageContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
@@ -30,7 +29,6 @@ interface MessageGroup {
 
 export function MessageList() {
   const { messages, isLoading, error } = useMessage();
-  const { currentChannel } = useChannel();
   const { currentWorkspace } = useWorkspace();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
@@ -38,7 +36,7 @@ export function MessageList() {
   // Close thread when switching channels or workspaces
   useEffect(() => {
     setActiveThreadId(null);
-  }, [currentChannel?.id, currentWorkspace?.id]);
+  }, [currentWorkspace?.id]);
 
   // Filter out messages that are replies
   const parentMessages = useMemo(() => {
@@ -81,14 +79,6 @@ export function MessageList() {
     return (
       <div className="p-4 text-text-secondary">
         Select a workspace to view messages
-      </div>
-    );
-  }
-
-  if (!currentChannel) {
-    return (
-      <div className="p-4 text-text-secondary">
-        Select a channel to view messages
       </div>
     );
   }

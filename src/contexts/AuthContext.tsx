@@ -2,8 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { authApi } from '../api/auth';
 import { jwtDecode } from 'jwt-decode';
 import { useWorkspace } from './WorkspaceContext';
-import { useChannel } from './ChannelContext';
-import { useMessage } from './MessageContext';
+import { useMessage } from './Message/MessageContext';
 import axiosInstance from '../api/axiosConfig';
 
 interface User {
@@ -234,16 +233,14 @@ export function useAuth() {
 
 export function useLogout() {
   const { logout } = useAuth();
-  const { setCurrentWorkspace } = useWorkspace();
-  const { setCurrentChannel } = useChannel();
+  const { setCurrentWorkspaceByUrl } = useWorkspace();
   const { setMessages } = useMessage();
 
   const handleLogout = async () => {
     try {
       await logout();
     } finally {
-      setCurrentWorkspace(null as any);
-      setCurrentChannel(null);
+      setCurrentWorkspaceByUrl(null as any);
       setMessages([]);
     }
   };
