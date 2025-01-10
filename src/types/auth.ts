@@ -1,3 +1,5 @@
+import { User } from "./User";
+
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -10,11 +12,7 @@ export interface RegisterCredentials {
 }
 
 interface BaseAuthResponse {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  };
+  user: User;
 }
 
 export interface LoginAuthResponse extends BaseAuthResponse {
@@ -24,6 +22,7 @@ export interface LoginAuthResponse extends BaseAuthResponse {
   };
 }
 
-export interface RefreshAuthResponse extends BaseAuthResponse {
+export interface RefreshAuthResponse {
   accessToken: string;
+  user: User | null;
 } 

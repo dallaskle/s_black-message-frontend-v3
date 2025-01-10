@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { authApi } from './auth';
+import type { RefreshAuthResponse } from '../types/auth';
 
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
@@ -28,7 +29,10 @@ axiosInstance.interceptors.response.use(
       
       try {
         const response = await authApi.refreshToken();
-        if (response?.accessToken) {
+        if (!response) {
+          return Promise.reject(new Error('Failed to refresh token'));
+        }
+        if (response.accessToken) {
           // Update the failed request with new token
           originalRequest.headers.Authorization = `Bearer ${response.accessToken}`;
           return axiosInstance(originalRequest);

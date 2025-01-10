@@ -23,6 +23,7 @@ interface MessageProviderProps {
   children: React.ReactNode;
   user: {
     id: string;
+    email: string;
     name: string;
   } | null;
 }

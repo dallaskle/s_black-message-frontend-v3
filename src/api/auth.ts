@@ -1,5 +1,6 @@
 import axiosInstance from './axiosConfig';
 import type { LoginCredentials, LoginAuthResponse, RefreshAuthResponse } from '../types/auth';
+import type { User } from '../types/User';
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
@@ -15,7 +16,13 @@ const processQueue = (error: any = null, token: string | null = null) => {
   refreshSubscribers = [];
 };
 
-export const authApi = {
+interface AuthApi {
+  login: (credentials: LoginCredentials) => Promise<LoginAuthResponse>;
+  refreshToken: () => Promise<RefreshAuthResponse | null>;
+  logout: () => Promise<void>;
+}
+
+export const authApi: AuthApi = {
   login: async (credentials: LoginCredentials) => {
     const { data } = await axiosInstance.post<LoginAuthResponse>('/auth/login', credentials);
     
