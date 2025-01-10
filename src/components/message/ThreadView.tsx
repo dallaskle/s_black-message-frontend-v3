@@ -48,6 +48,7 @@ export function ThreadView({ parentMessageId, onClose }: ThreadViewProps) {
           <Message 
             key={message.id} 
             message={message}
+            isInThread={true}
           />
         ))}
         <div ref={threadEndRef} />

@@ -9,9 +9,10 @@ const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '🤔', '👀'];
 interface MessageProps {
   message: MessageType;
   onThreadClick?: (messageId: string) => void;
+  isInThread?: boolean;
 }
 
-export function Message({ message, onThreadClick }: MessageProps) {
+export function Message({ message, onThreadClick, isInThread }: MessageProps) {
   const { updateMessage, deleteMessage, toggleReaction, messages } = useMessage();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
@@ -243,7 +244,7 @@ export function Message({ message, onThreadClick }: MessageProps) {
       {renderFiles(message.files)}
       
       {/* Thread info */}
-      {threadInfo && (
+      {threadInfo && !isInThread && (
         <button
           onClick={() => onThreadClick?.(message.id)}
           className="mt-2 text-sm text-accent-primary hover:text-accent-primary/90"
