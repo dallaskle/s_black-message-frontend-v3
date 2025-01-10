@@ -29,6 +29,11 @@ export function ThreadView({ parentMessageId, onClose }: ThreadViewProps) {
     };
   }, [parentMessageId]);
 
+  // Add new useEffect for scrolling when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [threadMessages]);
+
   const scrollToBottom = () => {
     threadEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };

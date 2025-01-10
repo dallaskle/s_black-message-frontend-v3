@@ -258,6 +258,25 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
 
       // If message is a reply...
       if (message.parent_message_id) {
+        // Update threadMessages state if this is a reply
+        setThreadMessages(prev => {
+          const replyExists = prev.some(r => 
+            r.id === message.id || 
+            (r.id.startsWith('temp-') && r.content === message.content)
+          );
+
+          if (replyExists) {
+            return prev.map(r => 
+              (r.id === message.id || 
+                (r.id.startsWith('temp-') && r.content === message.content))
+                ? { ...message, name: message.name || r.name }
+                : r
+            );
+          }
+          return [...prev, message];
+        });
+
+        // Update the replies in the main messages array
         return prev.map(msg => {
           if (msg.id === message.parent_message_id) {
             const replyExists = msg.replies?.some(r => 
