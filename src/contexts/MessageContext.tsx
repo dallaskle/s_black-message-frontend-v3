@@ -120,29 +120,13 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     });
 
     try {
-      const savedMessage = await messageApi.createMessage(
+      await messageApi.createMessage(
         currentChannel.id,
         content,
         file,
         onProgress,
         parentMessageId
       );
-
-      // Replace optimistic message with saved message
-      setMessages(prev => prev.map(msg => {
-        if (msg.id === optimisticMessage.id) {
-          return savedMessage;
-        }
-        if (msg.id === parentMessageId) {
-          return {
-            ...msg,
-            replies: (msg.replies || []).map(reply =>
-              reply.id === optimisticMessage.id ? savedMessage : reply
-            )
-          };
-        }
-        return msg;
-      }));
 
     } catch (err) {
       // Remove optimistic message on error
