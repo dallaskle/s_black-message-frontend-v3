@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { WorkspaceList } from '../../components/workspace/WorkspaceList';
 import { ChannelList } from '../../components/channel/ChannelList';
-import { MessageList } from '../../components/message/MessageList';
+import { MessageList } from '../../components/message/views/MessageList';
 import { WorkspaceProvider } from '../../contexts/WorkspaceContext';
 import { MessageProvider } from '../../contexts/Message/MessageContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';

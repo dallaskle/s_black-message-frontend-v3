@@ -1,7 +1,7 @@
-import { useMessage } from '../../contexts/Message/MessageContext';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { Message } from './Message';
-import { MessageInput } from './MessageInput';
+import { useMessage } from '../../../contexts/Message/MessageContext';
+import { useWorkspace } from '../../../contexts/WorkspaceContext';
+import { Message } from '../Message';
+import { MessageInput } from '../MessageInput';
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { ThreadView } from './ThreadView';
 

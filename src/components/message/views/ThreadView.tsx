@@ -1,8 +1,8 @@
-import { useMessage } from '../../contexts/Message/MessageContext';
-import { Message } from './Message';
-import { MessageInput } from './MessageInput';
+import { useMessage } from '../../../contexts/Message/MessageContext';
+import { Message } from '../Message';
+import { MessageInput } from '../MessageInput';
 import { useRef, useEffect } from 'react';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useWorkspace } from '../../../contexts/WorkspaceContext';
 
 interface ThreadViewProps {
   parentMessageId: string;
