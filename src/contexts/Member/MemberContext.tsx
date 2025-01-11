@@ -40,10 +40,10 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [workspaceMembers]);
 
   const fetchChannelMembers = useCallback(async (channelId: string) => {
-    if (channelMembers[channelId]) return;
-    
     setLoadingChannelMembers(true);
     setError(null);
+    
+    setChannelMembers({});
     
     const response = await memberApi.getChannelMembers(channelId);
     
@@ -57,7 +57,7 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     
     setLoadingChannelMembers(false);
-  }, [channelMembers]);
+  }, []);
 
   const clearMembers = useCallback(() => {
     setWorkspaceMembers({});

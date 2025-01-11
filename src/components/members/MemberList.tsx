@@ -31,15 +31,18 @@ export const MemberList: React.FC<MemberListProps> = ({
     if (workspaceId) {
       fetchWorkspaceMembers(workspaceId);
     }
+  }, [workspaceId, fetchWorkspaceMembers]);
+
+  useEffect(() => {
     if (channelId) {
       fetchChannelMembers(channelId);
     }
-  }, [workspaceId, channelId, fetchWorkspaceMembers, fetchChannelMembers]);
+  }, [channelId, fetchChannelMembers]);
 
-  const members = workspaceId
-    ? workspaceMembers[workspaceId] || []
-    : channelId
-    ? channelMembers[channelId] || []
+  const members = channelId
+    ? channelMembers[channelId] ?? []
+    : workspaceId
+    ? workspaceMembers[workspaceId] ?? []
     : [];
 
   const filteredMembers = members.filter(member =>
@@ -47,7 +50,7 @@ export const MemberList: React.FC<MemberListProps> = ({
     member.users.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const loading = workspaceId ? loadingWorkspaceMembers : loadingChannelMembers;
+  const loading = channelId ? loadingChannelMembers : loadingWorkspaceMembers;
 
   if (error) {
     return (

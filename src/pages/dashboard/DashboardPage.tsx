@@ -120,9 +120,9 @@ function DashboardContent() {
   }, [currentWorkspace?.id, fetchWorkspaceMembers]);
 
   const memberCount = currentChannel?.id 
-    ? (channelMembers[currentChannel.id]?.length ?? (currentWorkspace?.id ? workspaceMembers[currentWorkspace.id]?.length : 0) ?? 0)
+    ? channelMembers[currentChannel.id]?.length ?? 0 // For channels, only show channel members
     : currentWorkspace?.id
-    ? (workspaceMembers[currentWorkspace.id]?.length ?? 0)
+    ? workspaceMembers[currentWorkspace.id]?.length ?? 0
     : 0;
 
   return (
