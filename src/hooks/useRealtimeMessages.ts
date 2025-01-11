@@ -22,7 +22,7 @@ export const useRealtimeMessages = (channelId: string | undefined) => {
             addMessage(messageWithFiles);
             break;
           case 'UPDATE':
-            updateMessage(messageWithFiles.id, messageWithFiles.content);
+            updateMessage(messageWithFiles, true);
             break;
           case 'DELETE':
             deleteMessage(messageWithFiles.id);

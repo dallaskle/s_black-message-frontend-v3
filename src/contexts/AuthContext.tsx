@@ -131,13 +131,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.refreshToken();
       
       if (response?.accessToken) {
+        // Set the token in axios headers
+        axiosInstance.defaults.headers.common.Authorization = `Bearer ${response.accessToken}`;
+        
         setAccessToken(response.accessToken);
-        setAuthState({
+        // Make sure we're setting the user data from the response
+        setAuthState(prev => ({
           isAuthenticated: true,
           isLoading: false,
-          user: response.user,
+          user: response.user || prev.user, // Fallback to previous user if response doesn't include user
           error: null
-        });
+        }));
         scheduleTokenRefresh(response.accessToken);
         return response.accessToken;
       }
@@ -152,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAccessToken(null);
       return null;
     } catch (error) {
+      console.error('Token refresh failed:', error);
       // Clear auth state on error
       setAuthState({
         isAuthenticated: false,
@@ -182,19 +187,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initAuth = async () => {
       try {
         const token = await refreshToken();
-        // If no token, just set loading to false and leave isAuthenticated as false
-        setAuthState(prev => ({
-          ...prev,
-          isLoading: false,
-          isAuthenticated: !!token
-        }));
+        if (!token) {
+          setAuthState(prev => ({
+            ...prev,
+            isLoading: false,
+            isAuthenticated: false,
+            user: null
+          }));
+        }
+        // Token refresh successful, user state should be updated in refreshToken
       } catch (error) {
-        // On error, clear the loading state
+        console.error('Init auth failed:', error);
         setAuthState(prev => ({
           ...prev,
           isLoading: false,
           isAuthenticated: false,
-          error: null
+          error: null,
+          user: null
         }));
       }
     };

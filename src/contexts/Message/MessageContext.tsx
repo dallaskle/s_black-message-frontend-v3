@@ -5,6 +5,7 @@ import type { Message } from '../../types/message';
 import { reactionApi } from '../../api/reaction';
 import { createSendMessage } from './messageServices/sendMessage';
 import { createAddMessage } from './messageServices/addMessage';
+import { createUpdateMessage } from './messageServices/updateMessage';
 interface MessageContextType {
   messages: Message[];
   threadMessages: Message[];
@@ -14,7 +15,7 @@ interface MessageContextType {
   isLoading: boolean;
   error: string | null;
   sendMessage: (content: string, file?: File, onProgress?: (progress: number) => void, parentMessageId?: string) => Promise<void>;
-  updateMessage: (messageId: string, content: string) => Promise<void>;
+  updateMessage: (message: Message, skipApi?: boolean) => Promise<Message>;
   deleteMessage: (messageId: string) => Promise<void>;
   toggleReaction: (messageId: string, emoji: string) => Promise<void>;
   addMessage: (message: Message) => void;
@@ -91,16 +92,15 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     [currentChannel?.id]
   );
 
-  const updateMessage = useCallback(async (messageId: string, content: string) => {
-    try {
-      const updatedMessage = await messageApi.updateMessage(messageId, content);
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId ? updatedMessage : msg
-      ));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update message');
-    }
-  }, []);
+  const updateMessage = useCallback(
+    //message: Message,
+    //skipApi?: boolean
+    createUpdateMessage({
+      setMessages,
+      setError,
+    }),
+    []
+  );
 
   const deleteMessage = useCallback(async (messageId: string) => {
     try {

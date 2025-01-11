@@ -1,13 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useMessage } from '../../contexts/Message/MessageContext';
-import type { Message as MessageType } from '../../types/message';
+import type { Message } from '../../types/message';
 import { FileData } from '../../types/file';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Common emojis for quick reactions
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '🤔', '👀'];
 
 interface MessageProps {
-  message: MessageType;
+  message: Message;
   onThreadClick?: (messageId: string) => void;
   isInThread?: boolean;
 }
@@ -17,10 +18,17 @@ export function Message({ message, onThreadClick, isInThread }: MessageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const { user } = useAuth();
 
   const handleUpdate = async () => {
     try {
-      await updateMessage(message.id, editContent);
+      // Create updated message with only the fields we want to change
+      const updatedMessage: Message = {
+        ...message,
+        content: editContent,
+      };
+      
+      await updateMessage(updatedMessage, false);
       setIsEditing(false);
     } catch (err) {
       console.error('Failed to update message:', err);
@@ -181,6 +189,13 @@ export function Message({ message, onThreadClick, isInThread }: MessageProps) {
     );
   };
 
+  const isOwnMessage = useMemo(() => {
+    console.log('Current user:', user);
+    console.log('Message user_id:', message.user_id);
+    console.log('Is own message:', user?.id === message.user_id);
+    return user?.id === message.user_id;
+  }, [user?.id, message.user_id]);
+
   if (isEditing) {
     return (
       <div className="group px-4 py-2 hover:bg-background-secondary">
@@ -224,18 +239,22 @@ export function Message({ message, onThreadClick, isInThread }: MessageProps) {
           >
             Reply
           </button>
-          <button
-            onClick={() => setIsEditing(true)}
-            className="text-sm text-text-secondary hover:text-text-primary"
-          >
-            Edit
-          </button>
-          <button
-            onClick={handleDelete}
-            className="text-sm text-accent-error hover:text-accent-error/90"
-          >
-            Delete
-          </button>
+          {isOwnMessage && (
+            <>
+              <button
+                onClick={() => setIsEditing(true)}
+                className="text-sm text-text-secondary hover:text-text-primary"
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleDelete}
+                className="text-sm text-accent-error hover:text-accent-error/90"
+              >
+                Delete
+              </button>
+            </>
+          )}
         </div>
       </div>
       <p className="mt-1 text-text-primary whitespace-pre-wrap font-thin">{message.content}</p>
