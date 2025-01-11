@@ -3,7 +3,8 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Plus } from 'lucide-react';
 import AddChannelModal from './AddChannelModal';
 import AddDMModal from './AddDMModal';
-import { channelApi } from '../../api/channel';
+import { Channel } from '../../types/channel';
+
 
 export function ChannelList() {
   const [isAddChannelOpen, setIsAddChannelOpen] = useState(false);
@@ -19,6 +20,7 @@ export function ChannelList() {
 
   const handleDMCreated = async (newChannel: Channel) => {
     addChannelToWorkspace(newChannel);
+    setCurrentChannel(newChannel);
     setIsAddDMOpen(false);
   };
 

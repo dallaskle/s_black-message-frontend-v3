@@ -6,13 +6,15 @@ import { Label } from '../ui/label';
 import { channelApi } from '../../api/channel';
 import Spinner from '../ui/Spinner';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { Channel } from '../../types/channel';
 
 interface AddDMModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onDMCreated?: (channel: Channel) => Promise<void>;
 }
 
-const AddDMModal = ({ isOpen, onClose }: AddDMModalProps) => {
+const AddDMModal = ({ isOpen, onClose, onDMCreated }: AddDMModalProps) => {
   const [userId, setUserId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,8 +28,12 @@ const AddDMModal = ({ isOpen, onClose }: AddDMModalProps) => {
     setIsLoading(true);
     
     try {
-      await channelApi.createDM(currentWorkspace.id, userId.trim());
-      await refreshWorkspaces();
+      const newChannel = await channelApi.createDM(currentWorkspace.id, userId.trim());
+      if (onDMCreated) {
+        await onDMCreated(newChannel);
+      } else {
+        await refreshWorkspaces();
+      }
       handleClose();
     } catch (error: any) {
       setError(error.response?.data?.message || 'Failed to create DM');
