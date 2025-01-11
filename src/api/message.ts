@@ -65,10 +65,11 @@ export const messageApi = {
     return data;
   },
 
-  updateMessage: async (messageId: string, content: string) => {
+  updateMessage: async (messageId: string, message: Message) => {
+    console.log('Updating message:', message);
     const { data } = await axiosInstance.patch<Message>(
       `/api/messages/${messageId}`,
-      { content }
+      message
     );
     return data;
   },

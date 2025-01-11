@@ -6,6 +6,7 @@ import { reactionApi } from '../../api/reaction';
 import { createSendMessage } from './messageServices/sendMessage';
 import { createAddMessage } from './messageServices/addMessage';
 import { createUpdateMessage } from './messageServices/updateMessage';
+import { createDeleteMessage } from './messageServices/deleteMessage';
 interface MessageContextType {
   messages: Message[];
   threadMessages: Message[];
@@ -16,7 +17,7 @@ interface MessageContextType {
   error: string | null;
   sendMessage: (content: string, file?: File, onProgress?: (progress: number) => void, parentMessageId?: string) => Promise<void>;
   updateMessage: (message: Message, skipApi?: boolean) => Promise<Message>;
-  deleteMessage: (messageId: string) => Promise<void>;
+  deleteMessage: (message: Message, skipApi?: boolean) => Promise<void>;
   toggleReaction: (messageId: string, emoji: string) => Promise<void>;
   addMessage: (message: Message) => void;
   updateReactions: (messageId: string) => Promise<void>;
@@ -79,6 +80,17 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     fetchMessages();
   }, [currentChannel?.id]);
 
+  // Used for real time messaging updates
+  const addMessage = useCallback(
+    //message: Message
+    createAddMessage({
+      setMessages,
+      setThreadMessages,
+    }),
+    []
+  );
+
+  // Used for sending new messages
   const sendMessage = useCallback(
     //content: string,
     //file?: File,
@@ -92,6 +104,7 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     [currentChannel?.id]
   );
 
+  // Used for editing messages
   const updateMessage = useCallback(
     //message: Message,
     //skipApi?: boolean
@@ -102,14 +115,13 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     []
   );
 
-  const deleteMessage = useCallback(async (messageId: string) => {
-    try {
-      await messageApi.deleteMessage(messageId);
-      setMessages(prev => prev.filter(msg => msg.id !== messageId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete message');
-    }
-  }, []);
+  const deleteMessage = useCallback(
+    createDeleteMessage({
+      setMessages,
+      setError
+    }),
+    []
+  );
 
   const toggleReaction = useCallback(async (messageId: string, emoji: string) => {
     try {
@@ -235,15 +247,7 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     }
   }, [messages]);
 
-  // Used for real time messaging updates
-  const addMessage = useCallback(
-    //message: Message
-    createAddMessage({
-      setMessages,
-      setThreadMessages,
-    }),
-    []
-  );
+  
 
   const updateReactions = useCallback(async (messageId: string) => {
     try {

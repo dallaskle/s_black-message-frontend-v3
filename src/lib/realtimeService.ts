@@ -19,7 +19,12 @@ export class RealtimeService {
 
   subscribeToMessages(channelId: string, callback: MessageCallback) {
     const key = `messages:${channelId}`;
-    if (this.subscriptions[key]) return;
+    console.log('Setting up message subscription for channel:', channelId);
+    
+    if (this.subscriptions[key]) {
+      console.log('Subscription already exists for channel:', channelId);
+      return;
+    }
 
     this.subscriptions[key] = supabase
       .channel('messages_changes')
@@ -33,8 +38,18 @@ export class RealtimeService {
         },
         async (payload: RealtimePostgresChangesPayload<Message>) => {
           try {
-            if (!payload.new || !('user_id' in payload.new)) return;
+            console.log('Received message event:', {
+              type: payload.eventType,
+              new: payload.new,
+              old: payload.old
+            });
+
+            if (!payload.new || !('user_id' in payload.new)) {
+              console.log('Invalid message payload:', payload);
+              return;
+            }
             
+            console.log('Fetching additional message data for:', payload.new.id);
             // Fetch complete message data including files
             const { data: messageData } = await supabase
               .from('messages')
@@ -78,6 +93,7 @@ export class RealtimeService {
         }
       )
       .subscribe((status) => {
+        console.log(`Subscription status for channel ${channelId}:`, status);
         if (status === 'SUBSCRIBED') {
           console.log(`Subscribed to messages for channel ${channelId}`);
         } else if (status === 'CLOSED') {

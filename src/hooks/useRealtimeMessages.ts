@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useMessage } from '../contexts/Message/MessageContext';
 import { realtimeService } from '../lib/realtimeService';
+import { MessageStatus } from '../types/message';
 
 export const useRealtimeMessages = (channelId: string | undefined) => {
   const { addMessage, updateMessage, deleteMessage, updateReactions } = useMessage();
@@ -17,15 +18,21 @@ export const useRealtimeMessages = (channelId: string | undefined) => {
           files: message.files || []
         };
 
+        console.log('eventType', eventType);
+
         switch (eventType) {
           case 'INSERT':
             addMessage(messageWithFiles);
             break;
           case 'UPDATE':
-            updateMessage(messageWithFiles, true);
-            break;
-          case 'DELETE':
-            deleteMessage(messageWithFiles.id);
+            console.log('realtime message', messageWithFiles);
+            if (messageWithFiles.status === MessageStatus.Deleted ) {
+              console.log('realtime deleting message', messageWithFiles);
+              deleteMessage(messageWithFiles, true);
+            } else {
+              console.log('realtime updating message', messageWithFiles);
+              updateMessage(messageWithFiles, true);
+            }
             break;
         }
       });

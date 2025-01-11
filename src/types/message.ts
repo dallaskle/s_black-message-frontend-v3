@@ -13,4 +13,11 @@ export interface Message {
   userReactions: string[];
   files?: FileData[];
   replies?: Message[];
+  status: MessageStatus;
 } 
+
+export enum MessageStatus {
+  Deleted = 'deleted',
+  Active = 'active',
+  Edited = 'edited',
+}

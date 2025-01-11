@@ -14,7 +14,7 @@ export const createUpdateMessage = ({ setMessages, setError }: UpdateMessageDeps
 
       if (!skipApi) {
         // For user-initiated updates, make the API call
-        finalMessage = await messageApi.updateMessage(message.id, message.content);
+        finalMessage = await messageApi.updateMessage(message.id, message);
       } else {
         // For realtime updates, use the provided message directly
         finalMessage = message;

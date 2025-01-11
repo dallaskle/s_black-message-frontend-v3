@@ -37,7 +37,7 @@ export function Message({ message, onThreadClick, isInThread }: MessageProps) {
 
   const handleDelete = async () => {
     try {
-      await deleteMessage(message.id);
+      deleteMessage(message);
     } catch (err) {
       console.error('Failed to delete message:', err);
     }
