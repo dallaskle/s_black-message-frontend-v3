@@ -1,27 +1,43 @@
 import { useState } from 'react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { Plus } from 'lucide-react';
+import { Plus, MoreVertical } from 'lucide-react';
 import AddChannelModal from './AddChannelModal';
 import AddDMModal from './AddDMModal';
+import DeleteChannelModal from './DeleteChannelModal';
 import { Channel } from '../../types/channel';
+import {
+  DropdownMenu,
+  DropdownMenuItem,
+} from '../ui/dropdown-menu';
 
 
 export function ChannelList() {
   const [isAddChannelOpen, setIsAddChannelOpen] = useState(false);
   const [isAddDMOpen, setIsAddDMOpen] = useState(false);
+  const [channelToDelete, setChannelToDelete] = useState<Channel | null>(null);
   const { 
     currentWorkspace, 
     currentChannel, 
     setCurrentChannel, 
     isLoading, 
     error,
-    addChannelToWorkspace 
+    addChannelToWorkspace,
+    deleteChannel
   } = useWorkspace();
 
   const handleDMCreated = async (newChannel: Channel) => {
     addChannelToWorkspace(newChannel);
     setCurrentChannel(newChannel);
     setIsAddDMOpen(false);
+  };
+
+  const handleDeleteChannel = async () => {
+    if (!channelToDelete) return;
+    try {
+      await deleteChannel(channelToDelete.id);
+    } catch (error) {
+      console.error('Failed to delete channel:', error);
+    }
   };
 
   if (!currentWorkspace) {
@@ -106,18 +122,34 @@ export function ChannelList() {
           <ul className="space-y-1">
             {regularChannels.map((channel) => (
               <li key={channel.id}>
-                <button
-                  onClick={() => setCurrentChannel(channel)}
-                  className={`w-full text-sm px-4 py-2 text-left transition-colors ${
-                    currentChannel?.id === channel.id
-                      ? 'bg-accent-primary/10 text-text-primary'
-                      : 'text-text-secondary hover:bg-background-secondary'
-                  }`}
-                >
-                  <span className="truncate whitespace-nowrap overflow-hidden text-ellipsis block">
-                    # {channel.name}
-                  </span>
-                </button>
+                <div className="flex items-center">
+                  <button
+                    onClick={() => setCurrentChannel(channel)}
+                    className={`flex-1 text-sm px-4 py-2 text-left transition-colors ${
+                      currentChannel?.id === channel.id
+                        ? 'bg-accent-primary/10 text-text-primary'
+                        : 'text-text-secondary hover:bg-background-secondary'
+                    }`}
+                  >
+                    <span className="truncate whitespace-nowrap overflow-hidden text-ellipsis block">
+                      # {channel.name}
+                    </span>
+                  </button>
+                  <DropdownMenu
+                    trigger={
+                      <div className="p-2 hover:bg-background-secondary rounded-md">
+                        <MoreVertical className="h-4 w-4 text-text-secondary" />
+                      </div>
+                    }
+                  >
+                    <DropdownMenuItem
+                      onClick={() => setChannelToDelete(channel)}
+                      className="text-red-500"
+                    >
+                      Delete Channel
+                    </DropdownMenuItem>
+                  </DropdownMenu>
+                </div>
               </li>
             ))}
           </ul>
@@ -172,6 +204,12 @@ export function ChannelList() {
         isOpen={isAddDMOpen} 
         onClose={() => setIsAddDMOpen(false)}
         onDMCreated={handleDMCreated}
+      />
+      <DeleteChannelModal
+        isOpen={!!channelToDelete}
+        onClose={() => setChannelToDelete(null)}
+        onConfirm={handleDeleteChannel}
+        channelName={channelToDelete?.name || ''}
       />
     </div>
   );

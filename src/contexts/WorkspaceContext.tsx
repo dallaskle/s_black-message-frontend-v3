@@ -15,6 +15,7 @@ interface WorkspaceContextType {
   refreshWorkspaces: () => Promise<void>;
   refreshCurrentWorkspaceChannels: () => Promise<void>;
   addChannelToWorkspace: (channel: Channel) => void;
+  deleteChannel: (channelId: string) => Promise<void>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -98,6 +99,30 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const deleteChannel = async (channelId: string) => {
+    if (!currentWorkspace) return;
+    
+    try {
+      await channelApi.deleteChannel(channelId);
+      
+      // Update workspaces state by removing the deleted channel
+      setCurrentWorkspace(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          channels: prev.channels.filter(c => c.id !== channelId)
+        };
+      });
+      
+      // If the deleted channel was the current channel, reset it
+      if (currentChannel?.id === channelId) {
+        setCurrentChannel(null);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
   // Initial load
   useEffect(() => {
     refreshWorkspaces();
@@ -132,6 +157,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         refreshWorkspaces,
         refreshCurrentWorkspaceChannels,
         addChannelToWorkspace,
+        deleteChannel,
       }}
     >
       {children}

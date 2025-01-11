@@ -34,4 +34,8 @@ export const channelApi = {
     );
     return data;
   },
+
+  deleteChannel: async (channelId: string) => {
+    await axiosInstance.delete(`/api/channels/${channelId}`);
+  },
 }; 
