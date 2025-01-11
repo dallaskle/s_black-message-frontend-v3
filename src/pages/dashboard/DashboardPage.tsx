@@ -6,7 +6,7 @@ import { MessageList } from '../../components/message/views/MessageList';
 import { WorkspaceProvider } from '../../contexts/WorkspaceContext';
 import { MessageProvider } from '../../contexts/Message/MessageContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth, useLogout } from '../../contexts/AuthContext';
 import Spinner from '../../components/ui/Spinner';
 import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
@@ -14,6 +14,7 @@ import { useRealtimeReactions } from '../../hooks/useRealtimeReactions';
 import { MemberProvider } from '../../contexts/Member/MemberContext';
 import { MembersSidebar } from '../../components/members/MembersSidebar';
 import { Users } from 'lucide-react';
+import { useMemberContext } from '../../contexts/Member/MemberContext';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -100,9 +101,29 @@ function DashboardContent() {
   const [channelWidth, setChannelWidth] = useState(240);
   const [showMembers, setShowMembers] = useState(false);
   const { currentWorkspace, currentChannel } = useWorkspace();
+  const { workspaceMembers, channelMembers, fetchWorkspaceMembers, fetchChannelMembers } = useMemberContext();
 
   useRealtimeMessages(currentChannel?.id);
   useRealtimeReactions(currentChannel?.id);
+
+  // Fetch members whenever channel or workspace changes
+  useEffect(() => {
+    if (currentChannel?.id) {
+      fetchChannelMembers(currentChannel.id);
+    }
+  }, [currentChannel?.id, fetchChannelMembers]);
+
+  useEffect(() => {
+    if (currentWorkspace?.id) {
+      fetchWorkspaceMembers(currentWorkspace.id);
+    }
+  }, [currentWorkspace?.id, fetchWorkspaceMembers]);
+
+  const memberCount = currentChannel?.id 
+    ? (channelMembers[currentChannel.id]?.length ?? (currentWorkspace?.id ? workspaceMembers[currentWorkspace.id]?.length : 0) ?? 0)
+    : currentWorkspace?.id
+    ? (workspaceMembers[currentWorkspace.id]?.length ?? 0)
+    : 0;
 
   return (
     <div className="h-screen bg-background-primary flex overflow-hidden">
@@ -202,7 +223,7 @@ function DashboardContent() {
               className="flex items-center gap-2"
             >
               <Users className="h-4 w-4" />
-              {showMembers ? 'Hide Members' : 'Show Members'}
+              {showMembers ? 'Hide Members' : `Show Members (${memberCount})`}
             </Button>
           )}
         </div>
