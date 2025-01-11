@@ -35,6 +35,14 @@ export const channelApi = {
     return data;
   },
 
+  createGroupDM: async (workspaceId: string, targetUserIds: string[]) => {
+    const { data } = await axiosInstance.post<Channel>(
+      `/api/workspaces/${workspaceId}/group-dm`,
+      { targetUserIds }
+    );
+    return data;
+  },
+
   deleteChannel: async (channelId: string) => {
     await axiosInstance.delete(`/api/channels/${channelId}`);
   },

@@ -4,6 +4,7 @@ import { useMemberContext } from '../../contexts/Member/MemberContext';
 import { Input } from '../ui/input';
 import { Skeleton } from '../ui/skeleton';
 import { MemberWithUser } from '../../types/member';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface MemberListProps {
   workspaceId?: string;
@@ -11,6 +12,8 @@ interface MemberListProps {
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
   onMemberSelect?: (member: MemberWithUser) => void;
+  selectedMembers?: MemberWithUser[];
+  excludeCurrentUser?: boolean;
 }
 
 export const MemberList: React.FC<MemberListProps> = ({
@@ -18,7 +21,9 @@ export const MemberList: React.FC<MemberListProps> = ({
   channelId,
   searchQuery = '',
   onSearchChange,
-  onMemberSelect
+  onMemberSelect,
+  selectedMembers = [],
+  excludeCurrentUser = false
 }) => {
   const {
     workspaceMembers,
@@ -29,6 +34,7 @@ export const MemberList: React.FC<MemberListProps> = ({
     fetchWorkspaceMembers,
     fetchChannelMembers
   } = useMemberContext();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (workspaceId) {
@@ -48,10 +54,12 @@ export const MemberList: React.FC<MemberListProps> = ({
     ? workspaceMembers[workspaceId] ?? []
     : [];
 
-  const filteredMembers = members.filter(member =>
-    member.users.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    member.users.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMembers = members
+    .filter(member => 
+      (!excludeCurrentUser || member.users.id !== user?.id) &&
+      (member.users.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.users.email.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
 
   const loading = channelId ? loadingChannelMembers : loadingWorkspaceMembers;
 
@@ -87,6 +95,7 @@ export const MemberList: React.FC<MemberListProps> = ({
               member={member}
               isOnline={false}
               onClick={onMemberSelect ? () => onMemberSelect(member) : undefined}
+              isSelected={selectedMembers.some(m => m.id === member.id)}
               className={onMemberSelect ? 'cursor-pointer hover:bg-accent/10' : ''}
             />
           ))
