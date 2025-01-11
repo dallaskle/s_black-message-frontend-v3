@@ -10,16 +10,15 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 interface AddChannelModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onChannelCreated: () => Promise<void>;
 }
 
-const AddChannelModal = ({ isOpen, onClose, onChannelCreated }: AddChannelModalProps) => {
+const AddChannelModal = ({ isOpen, onClose }: AddChannelModalProps) => {
   const [name, setName] = useState('');
   const [topic, setTopic] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, addChannelToWorkspace } = useWorkspace();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,13 +28,13 @@ const AddChannelModal = ({ isOpen, onClose, onChannelCreated }: AddChannelModalP
     setIsLoading(true);
     
     try {
-      await channelApi.createChannel(currentWorkspace.id, {
+      const newChannel = await channelApi.createChannel(currentWorkspace.id, {
         name: name.toLowerCase().trim(),
         topic,
         is_private: isPrivate
       });
       
-      await onChannelCreated();
+      addChannelToWorkspace(newChannel);
       handleClose();
     } catch (error: any) {
       setError(error.response?.data?.message || 'Failed to create channel');

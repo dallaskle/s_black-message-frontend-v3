@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { workspaceApi } from '../api/workspace';
 import type { WorkspaceWithChannels } from '../types/workspace';
 import type { Channel } from '../types/channel';
+import { channelApi } from '../api/channel';
 
 interface WorkspaceContextType {
   workspaces: WorkspaceWithChannels[];
@@ -12,6 +13,8 @@ interface WorkspaceContextType {
   isLoading: boolean;
   error: string | null;
   refreshWorkspaces: () => Promise<void>;
+  refreshCurrentWorkspaceChannels: () => Promise<void>;
+  addChannelToWorkspace: (channel: Channel) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -48,6 +51,53 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshCurrentWorkspaceChannels = async () => {
+    if (!currentWorkspace) return;
+    
+    setIsLoading(true);
+    try {
+      const channels = await channelApi.getWorkspaceChannels(currentWorkspace.id);
+      
+      // Update current workspace with new channels
+      const updatedWorkspace = {
+        ...currentWorkspace,
+        channels
+      };
+      
+      // Update both states
+      setCurrentWorkspace(updatedWorkspace);
+      setWorkspaces(prevWorkspaces => 
+        prevWorkspaces.map(w => 
+          w.id === currentWorkspace.id ? updatedWorkspace : w
+        )
+      );
+      
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch channels');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addChannelToWorkspace = (newChannel: Channel) => {
+    if (!currentWorkspace) return;
+    
+    // Update current workspace channels
+    const updatedWorkspace = {
+      ...currentWorkspace,
+      channels: [...currentWorkspace.channels, newChannel]
+    };
+    
+    // Update both states
+    setCurrentWorkspace(updatedWorkspace);
+    setWorkspaces(prevWorkspaces => 
+      prevWorkspaces.map(w => 
+        w.id === currentWorkspace.id ? updatedWorkspace : w
+      )
+    );
+  };
+
   // Initial load
   useEffect(() => {
     refreshWorkspaces();
@@ -80,6 +130,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         refreshWorkspaces,
+        refreshCurrentWorkspaceChannels,
+        addChannelToWorkspace,
       }}
     >
       {children}

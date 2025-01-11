@@ -14,16 +14,11 @@ export function ChannelList() {
     setCurrentChannel, 
     isLoading, 
     error,
-    refreshWorkspaces
+    addChannelToWorkspace 
   } = useWorkspace();
 
-  const handleChannelCreated = async () => {
-    await refreshWorkspaces();
-    setIsAddChannelOpen(false);
-  };
-
-  const handleDMCreated = async () => {
-    await refreshWorkspaces();
+  const handleDMCreated = async (newChannel: Channel) => {
+    addChannelToWorkspace(newChannel);
     setIsAddDMOpen(false);
   };
 
@@ -170,7 +165,6 @@ export function ChannelList() {
       <AddChannelModal 
         isOpen={isAddChannelOpen} 
         onClose={() => setIsAddChannelOpen(false)}
-        onChannelCreated={handleChannelCreated}
       />
       <AddDMModal 
         isOpen={isAddDMOpen} 
