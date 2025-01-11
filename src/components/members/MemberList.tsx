@@ -51,7 +51,7 @@ export const MemberList: React.FC<MemberListProps> = ({
 
   if (error) {
     return (
-      <div className="p-4 text-red-500 text-sm">
+      <div className="p-4 text-accent-error text-sm">
         Error loading members: {error}
       </div>
     );
@@ -65,7 +65,7 @@ export const MemberList: React.FC<MemberListProps> = ({
           placeholder="Search members..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full"
+          className="w-full bg-background-primary text-text-primary placeholder:text-text-secondary"
         />
       )}
       
@@ -83,7 +83,7 @@ export const MemberList: React.FC<MemberListProps> = ({
             />
           ))
         ) : (
-          <div className="text-center text-gray-500 py-4">
+          <div className="text-center text-text-secondary py-4">
             No members found
           </div>
         )}

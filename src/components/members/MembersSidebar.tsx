@@ -19,9 +19,9 @@ export const MembersSidebar: React.FC<MembersSidebarProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
-    <div className={`w-80 border-l border-gray-200 bg-white h-full flex flex-col ${className}`}>
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <h2 className="font-semibold">Members</h2>
+    <div className={`w-80 border-l border-border-primary bg-background-secondary h-full flex flex-col ${className}`}>
+      <div className="flex items-center justify-between p-4 border-b border-border-primary">
+        <h2 className="font-semibold text-text-primary">Members</h2>
         <Button variant="secondary" onClick={onClose} className="p-2">
           <X className="h-4 w-4" />
         </Button>
