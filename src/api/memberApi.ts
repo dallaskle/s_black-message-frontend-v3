@@ -21,7 +21,7 @@ export const memberApi = {
   getChannelMembers: async (channelId: string): Promise<MemberListResponse> => {
     try {
       const { data } = await axiosInstance.get<MemberWithUser[]>(
-        `/api/channels/${channelId}/members/list`
+        `/api/workspaces/channels/${channelId}/members/list`
       );
       console.log('Channel members response:', data);
       return { data, error: null };
