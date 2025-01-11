@@ -1,4 +1,4 @@
-import { Message } from "../../../types/message";
+import { Message, MessageStatus } from "../../../types/message";
 
 export const addMessageToArray = (messages: Message[], message: Message): Message[] => {
   if (message.parent_message_id) {
@@ -34,5 +34,6 @@ export const createOptimisticMessage = (content: string, file?: File, parentMess
       file_name: file.name,
       file_size: file.size,
       mime_type: file.type,
-    }] : []
+    }] : [],
+    status: MessageStatus.Active
   });
