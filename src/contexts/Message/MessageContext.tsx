@@ -4,7 +4,7 @@ import { useWorkspace } from '../WorkspaceContext';
 import type { Message } from '../../types/message';
 import { reactionApi } from '../../api/reaction';
 import { createSendMessage } from './messageServices/sendMessage';
-
+import { createAddMessage } from './messageServices/addMessage';
 interface MessageContextType {
   messages: Message[];
   threadMessages: Message[];
@@ -235,80 +235,15 @@ export function MessageProvider({ children, user }: MessageProviderProps) {
     }
   }, [messages]);
 
-  const addMessage = useCallback((message: Message) => {
-    setMessages(prev => {
-      // Check if message already exists
-      const messageExists = prev.some(m => m.id === message.id || 
-        (m.id.startsWith('temp-') && m.content === message.content));
-
-      if (messageExists) {
-        // If message exists, just update it (in case server added more data)
-        return prev.map(m => {
-          if (m.id === message.id || 
-            (m.id.startsWith('temp-') && m.content === message.content)) {
-            return {
-              ...message,
-              // Keep existing name if the new message doesn't have one
-              name: message.name || m.name
-            };
-          }
-          return m;
-        });
-      }
-
-      // If message is a reply...
-      if (message.parent_message_id) {
-        // Update threadMessages state if this is a reply
-        setThreadMessages(prev => {
-          const replyExists = prev.some(r => 
-            r.id === message.id || 
-            (r.id.startsWith('temp-') && r.content === message.content)
-          );
-
-          if (replyExists) {
-            return prev.map(r => 
-              (r.id === message.id || 
-                (r.id.startsWith('temp-') && r.content === message.content))
-                ? { ...message, name: message.name || r.name }
-                : r
-            );
-          }
-          return [...prev, message];
-        });
-
-        // Update the replies in the main messages array
-        return prev.map(msg => {
-          if (msg.id === message.parent_message_id) {
-            const replyExists = msg.replies?.some(r => 
-              r.id === message.id || 
-              (r.id.startsWith('temp-') && r.content === message.content)
-            );
-
-            if (replyExists) {
-              return {
-                ...msg,
-                replies: msg.replies?.map(r => 
-                  (r.id === message.id || 
-                    (r.id.startsWith('temp-') && r.content === message.content))
-                    ? { ...message, name: message.name || r.name }
-                    : r
-                )
-              };
-            }
-
-            return {
-              ...msg,
-              replies: [...(msg.replies || []), message]
-            };
-          }
-          return msg;
-        });
-      }
-
-      // Otherwise add to main messages array
-      return [...prev, message];
-    });
-  }, []);
+  // Used for real time messaging updates
+  const addMessage = useCallback(
+    //message: Message
+    createAddMessage({
+      setMessages,
+      setThreadMessages,
+    }),
+    []
+  );
 
   const updateReactions = useCallback(async (messageId: string) => {
     try {
