@@ -11,6 +11,9 @@ import { useAuth, useLogout } from '../../contexts/AuthContext';
 import Spinner from '../../components/ui/Spinner';
 import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
 import { useRealtimeReactions } from '../../hooks/useRealtimeReactions';
+import { MemberProvider } from '../../contexts/Member/MemberContext';
+import { MembersSidebar } from '../../components/members/MembersSidebar';
+import { Users } from 'lucide-react';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -95,7 +98,8 @@ function UserInfo() {
 function DashboardContent() {
   const [workspaceWidth, setWorkspaceWidth] = useState(240);
   const [channelWidth, setChannelWidth] = useState(240);
-  const { currentChannel } = useWorkspace();
+  const [showMembers, setShowMembers] = useState(false);
+  const { currentWorkspace, currentChannel } = useWorkspace();
 
   useRealtimeMessages(currentChannel?.id);
   useRealtimeReactions(currentChannel?.id);
@@ -189,9 +193,30 @@ function DashboardContent() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <DashboardHeader />
+        <div className="flex items-center justify-between px-4 py-2 border-b border-text-secondary/10">
+          <DashboardHeader />
+          {(currentWorkspace || currentChannel) && (
+            <Button
+              variant="secondary"
+              onClick={() => setShowMembers(!showMembers)}
+              className="flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              {showMembers ? 'Hide Members' : 'Show Members'}
+            </Button>
+          )}
+        </div>
         <MessageList />
       </div>
+
+      {/* Members Sidebar */}
+      {showMembers && (
+        <MembersSidebar
+          workspaceId={currentWorkspace?.id}
+          channelId={currentChannel?.id}
+          onClose={() => setShowMembers(false)}
+        />
+      )}
     </div>
   );
 }
@@ -199,20 +224,28 @@ function DashboardContent() {
 // Main DashboardPage component now only handles providers and loading state
 export function DashboardPage() {
   const { isLoading, user } = useAuth();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center">
         <Spinner />
       </div>
     );
   }
 
+  if (!user) {
+    navigate('/login');
+    return null;
+  }
+
   return (
     <WorkspaceProvider>
-        <MessageProvider user={user}>
+      <MessageProvider user={user}>
+        <MemberProvider>
           <DashboardContent />
-        </MessageProvider>
+        </MemberProvider>
+      </MessageProvider>
     </WorkspaceProvider>
   );
 }
