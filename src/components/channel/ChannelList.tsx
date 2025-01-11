@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Plus, MoreVertical } from 'lucide-react';
 import AddChannelModal from './AddChannelModal';
-import AddDMModal from './AddDMModal';
+import { CreateDMDialog } from '../members/CreateDMDialog';
 import DeleteChannelModal from './DeleteChannelModal';
 import { Channel } from '../../types/channel';
 import {
@@ -10,10 +10,8 @@ import {
   DropdownMenuItem,
 } from '../ui/dropdown-menu';
 
-
 export function ChannelList() {
   const [isAddChannelOpen, setIsAddChannelOpen] = useState(false);
-  const [isAddDMOpen, setIsAddDMOpen] = useState(false);
   const [channelToDelete, setChannelToDelete] = useState<Channel | null>(null);
   const { 
     currentWorkspace, 
@@ -24,12 +22,6 @@ export function ChannelList() {
     addChannelToWorkspace,
     deleteChannel
   } = useWorkspace();
-
-  const handleDMCreated = async (newChannel: Channel) => {
-    addChannelToWorkspace(newChannel);
-    setCurrentChannel(newChannel);
-    setIsAddDMOpen(false);
-  };
 
   const handleDeleteChannel = async () => {
     if (!channelToDelete) return;
@@ -162,17 +154,11 @@ export function ChannelList() {
           <h2 className="text-sm font-semibold text-text-secondary uppercase">
             Direct Messages
           </h2>
-          <button
-            onClick={() => setIsAddDMOpen(true)}
-            className="text-text-secondary hover:text-text-primary"
-            aria-label="Add Direct Message"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
+          <CreateDMDialog />
         </div>
         {dmChannels.length === 0 ? (
           <div className="px-4 text-text-secondary text-sm">
-            No direct messages yet. Click the + to start one.
+            No direct messages yet. Click + to start one.
           </div>
         ) : (
           <ul className="space-y-1">
@@ -199,11 +185,6 @@ export function ChannelList() {
       <AddChannelModal 
         isOpen={isAddChannelOpen} 
         onClose={() => setIsAddChannelOpen(false)}
-      />
-      <AddDMModal 
-        isOpen={isAddDMOpen} 
-        onClose={() => setIsAddDMOpen(false)}
-        onDMCreated={handleDMCreated}
       />
       <DeleteChannelModal
         isOpen={!!channelToDelete}

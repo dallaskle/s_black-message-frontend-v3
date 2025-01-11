@@ -1,21 +1,24 @@
 import React, { useEffect } from 'react';
 import { MemberListItem } from './MemberListItem';
 import { useMemberContext } from '../../contexts/Member/MemberContext';
-import { Input } from '../../components/ui/input';
-import { Skeleton } from '../../components/ui/skeleton';
+import { Input } from '../ui/input';
+import { Skeleton } from '../ui/skeleton';
+import { MemberWithUser } from '../../types/member';
 
 interface MemberListProps {
   workspaceId?: string;
   channelId?: string;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  onMemberSelect?: (member: MemberWithUser) => void;
 }
 
 export const MemberList: React.FC<MemberListProps> = ({
   workspaceId,
   channelId,
   searchQuery = '',
-  onSearchChange
+  onSearchChange,
+  onMemberSelect
 }) => {
   const {
     workspaceMembers,
@@ -82,7 +85,9 @@ export const MemberList: React.FC<MemberListProps> = ({
             <MemberListItem
               key={member.id}
               member={member}
-              isOnline={false} // TODO: Implement online status
+              isOnline={false}
+              onClick={onMemberSelect ? () => onMemberSelect(member) : undefined}
+              className={onMemberSelect ? 'cursor-pointer hover:bg-accent/10' : ''}
             />
           ))
         ) : (

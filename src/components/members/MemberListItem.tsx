@@ -1,14 +1,22 @@
 import React from 'react';
 import { MemberWithUser } from '../../types/member';
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
-import { Badge } from '../../components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Badge } from '../ui/badge';
+import { cn } from '../../lib/utils';
 
 interface MemberListItemProps {
   member: MemberWithUser;
   isOnline?: boolean;
+  onClick?: () => void;
+  className?: string;
 }
 
-export const MemberListItem: React.FC<MemberListItemProps> = ({ member, isOnline = false }) => {
+export const MemberListItem: React.FC<MemberListItemProps> = ({ 
+  member, 
+  isOnline = false,
+  onClick,
+  className
+}) => {
   const { users, role } = member;
   const initials = users.name
     .split(' ')
@@ -17,7 +25,15 @@ export const MemberListItem: React.FC<MemberListItemProps> = ({ member, isOnline
     .toUpperCase();
 
   return (
-    <div className="flex items-center justify-between p-2 hover:bg-background-primary rounded-md">
+    <div 
+      className={cn(
+        "flex items-center justify-between p-2 hover:bg-background-primary rounded-md",
+        className
+      )}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
       <div className="flex items-center gap-3">
         <div className="relative">
           <Avatar>
