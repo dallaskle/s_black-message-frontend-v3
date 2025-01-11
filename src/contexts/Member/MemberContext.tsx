@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { MemberWithUser, MemberContextType } from '../../types/member';
-import { getWorkspaceMembers, getChannelMembers } from '../../api/memberApi';
+import { memberApi } from '../../api/memberApi';
 
 const MemberContext = createContext<MemberContextType | undefined>(undefined);
 
@@ -25,7 +25,7 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setLoadingWorkspaceMembers(true);
     setError(null);
     
-    const response = await getWorkspaceMembers(workspaceId);
+    const response = await memberApi.getWorkspaceMembers(workspaceId);
     
     if (response.error) {
       setError(response.error);
@@ -45,7 +45,7 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setLoadingChannelMembers(true);
     setError(null);
     
-    const response = await getChannelMembers(channelId);
+    const response = await memberApi.getChannelMembers(channelId);
     
     if (response.error) {
       setError(response.error);
