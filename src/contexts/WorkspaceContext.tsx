@@ -29,15 +29,20 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       const data = await workspaceApi.getWorkspaceWithChannels();
       setWorkspaces(data);
       
-      // Only set the first workspace if we have no workspaces loaded yet
-      if (data.length > 0 && workspaces.length === 0 && !currentWorkspace) {
+      // Update current workspace with new data if it exists
+      if (currentWorkspace) {
+        const updatedCurrentWorkspace = data.find(w => w.id === currentWorkspace.id);
+        if (updatedCurrentWorkspace) {
+          setCurrentWorkspace(updatedCurrentWorkspace);
+        }
+      } else if (data.length > 0) {
+        // Only set the first workspace if we have no current workspace
         setCurrentWorkspace(data[0]);
       }
       
       setError(null);
     } catch (err) {
       setError('Failed to fetch workspaces and channels');
-      console.error('Error fetching workspaces:', err);
     } finally {
       setIsLoading(false);
     }

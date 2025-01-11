@@ -3,11 +3,29 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Plus } from 'lucide-react';
 import AddChannelModal from './AddChannelModal';
 import AddDMModal from './AddDMModal';
+import { channelApi } from '../../api/channel';
 
 export function ChannelList() {
   const [isAddChannelOpen, setIsAddChannelOpen] = useState(false);
   const [isAddDMOpen, setIsAddDMOpen] = useState(false);
-  const { currentWorkspace, currentChannel, setCurrentChannel, isLoading, error } = useWorkspace();
+  const { 
+    currentWorkspace, 
+    currentChannel, 
+    setCurrentChannel, 
+    isLoading, 
+    error,
+    refreshWorkspaces
+  } = useWorkspace();
+
+  const handleChannelCreated = async () => {
+    await refreshWorkspaces();
+    setIsAddChannelOpen(false);
+  };
+
+  const handleDMCreated = async () => {
+    await refreshWorkspaces();
+    setIsAddDMOpen(false);
+  };
 
   if (!currentWorkspace) {
     return (
@@ -151,11 +169,13 @@ export function ChannelList() {
 
       <AddChannelModal 
         isOpen={isAddChannelOpen} 
-        onClose={() => setIsAddChannelOpen(false)} 
+        onClose={() => setIsAddChannelOpen(false)}
+        onChannelCreated={handleChannelCreated}
       />
       <AddDMModal 
         isOpen={isAddDMOpen} 
-        onClose={() => setIsAddDMOpen(false)} 
+        onClose={() => setIsAddDMOpen(false)}
+        onDMCreated={handleDMCreated}
       />
     </div>
   );
