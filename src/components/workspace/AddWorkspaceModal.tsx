@@ -8,8 +8,13 @@ import { CreateWorkspace } from './CreateWorkspace';
 import Spinner from '../ui/Spinner';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 
-const AddWorkspaceModal = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface AddWorkspaceModalProps {
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+const AddWorkspaceModal = ({ isOpen: externalIsOpen, onOpenChange }: AddWorkspaceModalProps) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [workspaceUrl, setWorkspaceUrl] = useState('-workspace.s_black.com');
   const [isUrlManuallyEdited, setIsUrlManuallyEdited] = useState(false);
@@ -17,6 +22,9 @@ const AddWorkspaceModal = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const { refreshWorkspaces, setCurrentWorkspaceByUrl } = useWorkspace();
+
+  // Use external or internal open state
+  const isModalOpen = externalIsOpen ?? internalIsOpen;
 
   // Auto-generate URL from name if not manually edited
   useEffect(() => {
@@ -40,9 +48,13 @@ const AddWorkspaceModal = () => {
       await refreshWorkspaces();
       setCurrentWorkspaceByUrl(workspaceUrl);
       
-      // Finally show success state
-      //setIsLoading(false);
       setIsSuccess(true);
+      setIsLoading(false);
+      
+      // Auto close after success
+      setTimeout(() => {
+        handleClose();
+      }, 1500);
     } catch (error: any) {
       setError(error.response?.data?.message || 'Failed to create workspace');
       setIsLoading(false);
@@ -57,7 +69,11 @@ const AddWorkspaceModal = () => {
 
   const handleClose = () => {
     if (!isLoading) {
-      setIsOpen(false);
+      if (onOpenChange) {
+        onOpenChange(false);
+      } else {
+        setInternalIsOpen(false);
+      }
       resetForm();
       setError(null);
       setIsSuccess(false);
@@ -67,13 +83,29 @@ const AddWorkspaceModal = () => {
   return (
     <>
       <div className="flex justify-center">
-        <CreateWorkspace onClick={() => setIsOpen(true)} />
+        <CreateWorkspace onClick={() => {
+          if (onOpenChange) {
+            onOpenChange(true);
+          } else {
+            setInternalIsOpen(true);
+          }
+        }} />
       </div>
-      <Dialog open={isOpen} onOpenChange={(open) => {
-        if (!isLoading) {
-          handleClose();
-        }
-      }}>
+      <Dialog 
+        open={isModalOpen} 
+        onOpenChange={(open) => {
+          if (!isLoading) {
+            if (onOpenChange) {
+              onOpenChange(open);
+            } else {
+              setInternalIsOpen(open);
+            }
+            if (!open) {
+              handleClose();
+            }
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[425px] bg-background-primary">
           <DialogHeader>
             <DialogTitle>

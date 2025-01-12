@@ -55,10 +55,17 @@ export function RegisterPage() {
         }, 2000);
       }
     } catch (err: any) {
+      console.error('Registration error:', err);
       if (err?.response?.data?.message) {
         setError(err.response.data.message);
+      } else if (err?.message?.includes('already registered')) {
+        setError('This email is already registered. Please try logging in instead.');
+      } else if (err?.message?.includes('invalid email')) {
+        setError('Please enter a valid email address.');
+      } else if (err?.message?.includes('password')) {
+        setError('Password does not meet the requirements. Please try again.');
       } else {
-        setError('Registration failed. Please try again.');
+        setError('Registration failed. Please try again or contact support if the problem persists.');
       }
     }
   };
