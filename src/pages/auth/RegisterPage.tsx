@@ -41,9 +41,9 @@ export function RegisterPage() {
       
       // If we got back a session, we're already logged in
       if (response.session?.access_token) {
-        setSuccessMessage('Registration successful! Redirecting to app...');
+        setSuccessMessage('Registration successful! Redirecting to dashboard...');
         setTimeout(() => {
-          navigate('/');
+          navigate('/dashboard');
         }, 1000);
       } else {
         // Fallback to manual verification if auto-verify failed

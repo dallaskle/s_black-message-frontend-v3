@@ -195,11 +195,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       const response = await authApi.register(credentials);
-      setAuthState(prev => ({ 
-        ...prev, 
-        isLoading: false,
-        error: null
-      }));
+      
+      // If we got back a session, set the authenticated state
+      if (response.session?.access_token) {
+        setAccessToken(response.session.access_token);
+        setAuthState({
+          isAuthenticated: true,
+          isLoading: false,
+          user: {
+            id: response.user.id,
+            email: response.user.email,
+            name: credentials.name // Use the name from credentials since we know it's valid
+          },
+          error: null
+        });
+        // Schedule token refresh
+        scheduleTokenRefresh(response.session.access_token);
+      } else {
+        setAuthState(prev => ({ 
+          ...prev, 
+          isLoading: false,
+          error: null
+        }));
+      }
+      
       return response;
     } catch (error) {
       handleAuthError(error);
