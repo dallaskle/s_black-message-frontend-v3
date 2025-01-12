@@ -1,9 +1,11 @@
 import { cn } from '../../lib/utils';
+import Spinner from './Spinner';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'destructive';
   size?: 'sm' | 'md' | 'lg';
   inline?: boolean;
+  isLoading?: boolean;
   children: React.ReactNode;
 }
 
@@ -12,7 +14,9 @@ const Button = ({
   variant = 'primary',
   size = 'md',
   inline = false,
+  isLoading = false,
   children,
+  disabled,
   ...props
 }: ButtonProps) => {
   const baseStyles = 'font-medium rounded-lg transition-colors duration-200';
@@ -38,9 +42,15 @@ const Button = ({
         'items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed',
         className
       )}
+      disabled={isLoading || disabled}
       {...props}
     >
-      {children}
+      {isLoading ? (
+        <div className="flex items-center gap-2">
+          <Spinner inline size={16} />
+          <span>Loading...</span>
+        </div>
+      ) : children}
     </button>
   );
 };
