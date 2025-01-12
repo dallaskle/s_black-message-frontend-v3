@@ -7,6 +7,7 @@ import { workspaceApi } from '../../api/workspace';
 import { CreateWorkspace } from './CreateWorkspace';
 import Spinner from '../ui/Spinner';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import InviteMemberModal from './InviteMemberModal';
 
 interface AddWorkspaceModalProps {
   isOpen?: boolean;
@@ -21,6 +22,7 @@ const AddWorkspaceModal = ({ isOpen: externalIsOpen, onOpenChange }: AddWorkspac
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const { refreshWorkspaces, setCurrentWorkspaceByUrl } = useWorkspace();
 
   // Use external or internal open state
@@ -115,8 +117,13 @@ const AddWorkspaceModal = ({ isOpen: externalIsOpen, onOpenChange }: AddWorkspac
           {isSuccess ? (
             <div className="space-y-4">
               <p className="text-center">Congratulations! Your workspace has been created successfully.</p>
-              <div className="flex justify-center">
-                <Button onClick={handleClose}>Close</Button>
+              <div className="flex flex-col space-y-2">
+                <Button onClick={() => setShowInviteModal(true)}>
+                  Invite Members
+                </Button>
+                <Button onClick={handleClose} variant="secondary">
+                  Close
+                </Button>
               </div>
             </div>
           ) : (
@@ -167,6 +174,15 @@ const AddWorkspaceModal = ({ isOpen: externalIsOpen, onOpenChange }: AddWorkspac
           )}
         </DialogContent>
       </Dialog>
+      <InviteMemberModal 
+        isOpen={showInviteModal} 
+        onOpenChange={(open) => {
+          setShowInviteModal(open);
+          if (!open) {
+            handleClose();
+          }
+        }} 
+      />
     </>
   );
 };
