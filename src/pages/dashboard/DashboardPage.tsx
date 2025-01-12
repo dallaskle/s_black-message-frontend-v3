@@ -19,7 +19,6 @@ import AddWorkspaceModal from '../../components/workspace/AddWorkspaceModal';
 // Create a separate header component for better organization
 function DashboardHeader() {
   const { currentWorkspace, currentChannel } = useWorkspace();
-  const navigate = useNavigate();
 
   const getHeaderTitle = () => {
     if (currentChannel) {
@@ -56,14 +55,6 @@ function DashboardHeader() {
     <div className="p-4 border-b border-text-secondary/10">
       <div className="flex justify-between items-center">
         {getHeaderTitle()}
-        {currentWorkspace && (
-          <Button
-            variant="secondary"
-            onClick={() => navigate(`/workspace/${currentWorkspace.id}/settings`)}
-          >
-            Workspace Settings
-          </Button>
-        )}
       </div>
     </div>
   );
