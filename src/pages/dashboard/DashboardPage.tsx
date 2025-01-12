@@ -285,7 +285,7 @@ export function DashboardPage() {
 
   return (
     <WorkspaceProvider>
-      <MessageProvider user={user}>
+      <MessageProvider>
         <MemberProvider>
           <DashboardContent />
         </MemberProvider>
