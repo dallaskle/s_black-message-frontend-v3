@@ -1,12 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Button } from '../../components/ui/Button';
 import InviteMemberModal from '../../components/workspace/InviteMemberModal';
 import InviteList from '../../components/workspace/InviteList';
+import { useParams } from 'react-router-dom';
 
 const WorkspaceSettingsPage = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, setCurrentWorkspaceById } = useWorkspace();
+  const { workspaceId } = useParams<{ workspaceId: string }>();
+
+  useEffect(() => {
+    if (workspaceId) {
+      setCurrentWorkspaceById(workspaceId);
+    }
+  }, [workspaceId, setCurrentWorkspaceById]);
 
   if (!currentWorkspace) {
     return (
