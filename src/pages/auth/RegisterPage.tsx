@@ -4,7 +4,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../contexts/AuthContext';
-import { authApi } from '../../api/auth';
 import { Button } from '../../components/ui/Button';
 import S_Black_Full_Logo from '../../../public/S_Black_Full_Logo.png';
 
@@ -25,7 +24,7 @@ export function RegisterPage() {
   const [error, setError] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
   const navigate = useNavigate();
-  const { register: registerUser, login: loginUser, error: authError } = useAuth();
+  const { register: registerUser } = useAuth();
   
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),

@@ -16,7 +16,6 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
   const [error, setError] = useState<string>('');
-  const navigate = useNavigate();
   const { login } = useAuth();
   
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({

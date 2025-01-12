@@ -1,6 +1,6 @@
 import axiosInstance from './axiosConfig';
 import type { LoginCredentials, LoginAuthResponse, RefreshAuthResponse } from '../types/auth';
-import type { User } from '../types/User';
+// import type { User } from '../types/User';
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];

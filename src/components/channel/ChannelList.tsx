@@ -19,7 +19,6 @@ export function ChannelList() {
     setCurrentChannel, 
     isLoading, 
     error,
-    addChannelToWorkspace,
     deleteChannel
   } = useWorkspace();
 
