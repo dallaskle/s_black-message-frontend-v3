@@ -8,6 +8,7 @@ interface WorkspaceContextType {
   workspaces: WorkspaceWithChannels[];
   currentWorkspace: WorkspaceWithChannels | null;
   setCurrentWorkspaceByUrl: (workspace_url: string) => void;
+  setCurrentWorkspaceById: (workspace_id: string) => void;
   currentChannel: Channel | null;
   setCurrentChannel: (channel: Channel | null) => void;
   isLoading: boolean;
@@ -144,12 +145,24 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setCurrentWorkspaceById = (workspace_id: string) => {
+    if (!workspace_id) {
+      setCurrentWorkspace(null);
+      return;
+    }
+    const workspace = workspaces.find(w => w.id === workspace_id);
+    if (workspace) {
+      setCurrentWorkspace(workspace);
+    }
+  };
+
   return (
     <WorkspaceContext.Provider
       value={{
         workspaces,
         currentWorkspace,
         setCurrentWorkspaceByUrl,
+        setCurrentWorkspaceById,
         currentChannel,
         setCurrentChannel,
         isLoading,
