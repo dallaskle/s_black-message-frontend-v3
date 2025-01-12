@@ -1,6 +1,5 @@
 import axiosInstance from './axiosConfig';
 import type { Message } from '../types/message';
-import type { FileUploadResponse } from '../types/file';
 
 // Update interface to use FileUploadResponse type
 // interface MessageWithFile {
