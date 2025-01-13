@@ -12,9 +12,10 @@ import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
 import { useRealtimeReactions } from '../../hooks/useRealtimeReactions';
 import { MemberProvider } from '../../contexts/Member/MemberContext';
 import { MembersSidebar } from '../../components/members/MembersSidebar';
-import { Users } from 'lucide-react';
+import { Users, Settings } from 'lucide-react';
 import { useMemberContext } from '../../contexts/Member/MemberContext';
 import AddWorkspaceModal from '../../components/workspace/AddWorkspaceModal';
+import WorkspaceSettingsModal from '../../components/workspace/WorkspaceSettingsModal';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -101,6 +102,7 @@ function DashboardContent() {
   const [channelWidth, setChannelWidth] = useState(240);
   const [showMembers, setShowMembers] = useState(false);
   const [showAddWorkspace, setShowAddWorkspace] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { currentWorkspace, currentChannel, workspaces, isLoading: workspacesLoading } = useWorkspace();
   const { workspaceMembers, channelMembers, fetchWorkspaceMembers, fetchChannelMembers } = useMemberContext();
   const navigate = useNavigate();
@@ -240,9 +242,11 @@ function DashboardContent() {
               {currentWorkspace && (
                 <Button
                   variant="secondary"
-                  onClick={() => navigate(`/workspace/${currentWorkspace.id}/settings`)}
+                  size="sm"
+                  onClick={() => setShowSettings(true)}
+                  className="h-8 w-8 p-0"
                 >
-                  Workspace Settings
+                  <Settings className="h-4 w-4" />
                 </Button>
               )}
               {(currentWorkspace || currentChannel) && (
@@ -273,6 +277,11 @@ function DashboardContent() {
       <AddWorkspaceModal 
         isOpen={showAddWorkspace} 
         onOpenChange={setShowAddWorkspace}
+      />
+
+      <WorkspaceSettingsModal
+        isOpen={showSettings}
+        onOpenChange={setShowSettings}
       />
     </>
   );

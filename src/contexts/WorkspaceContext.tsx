@@ -17,6 +17,7 @@ interface WorkspaceContextType {
   refreshCurrentWorkspaceChannels: () => Promise<void>;
   addChannelToWorkspace: (channel: Channel) => void;
   deleteChannel: (channelId: string) => Promise<void>;
+  updateWorkspace: (workspace: WorkspaceWithChannels) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -124,6 +125,20 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateWorkspace = (updatedWorkspace: WorkspaceWithChannels) => {
+    // Update current workspace if it's the one being updated
+    if (currentWorkspace?.id === updatedWorkspace.id) {
+      setCurrentWorkspace(updatedWorkspace);
+    }
+    
+    // Update workspaces list
+    setWorkspaces(prevWorkspaces =>
+      prevWorkspaces.map(w =>
+        w.id === updatedWorkspace.id ? updatedWorkspace : w
+      )
+    );
+  };
+
   // Initial load
   useEffect(() => {
     refreshWorkspaces();
@@ -171,6 +186,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         refreshCurrentWorkspaceChannels,
         addChannelToWorkspace,
         deleteChannel,
+        updateWorkspace,
       }}
     >
       {children}
