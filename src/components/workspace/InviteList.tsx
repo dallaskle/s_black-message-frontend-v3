@@ -17,8 +17,11 @@ const InviteList = () => {
     try {
       const data = await workspaceInviteApi.getInvites(currentWorkspace.id);
       setInvites(data);
+      setError(null);
     } catch (error: any) {
-      setError(error.response?.data?.message || 'Failed to load invitations');
+      console.error('Error loading invites:', error);
+      setInvites([]);
+      setError('No invites found');
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +53,7 @@ const InviteList = () => {
 
   if (error) {
     return (
-      <div className="text-red-500 text-sm p-2 bg-red-50 rounded">
+      <div className="text-gray-500 text-sm p-4 text-center">
         {error}
       </div>
     );
