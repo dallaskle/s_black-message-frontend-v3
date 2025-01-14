@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { WorkspaceList } from '../../components/workspace/WorkspaceList';
@@ -6,7 +7,6 @@ import { MessageList } from '../../components/message/views/MessageList';
 import { WorkspaceProvider } from '../../contexts/WorkspaceContext';
 import { MessageProvider } from '../../contexts/Message/MessageContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
-import { useState, useEffect } from 'react';
 import { useAuth, useLogout } from '../../contexts/AuthContext';
 import Spinner from '../../components/ui/Spinner';
 import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
@@ -15,6 +15,10 @@ import { MemberProvider } from '../../contexts/Member/MemberContext';
 import { MembersSidebar } from '../../components/members/MembersSidebar';
 import { Users } from 'lucide-react';
 import { useMemberContext } from '../../contexts/Member/MemberContext';
+import { CloneList } from '../../components/clones/management/CloneList/CloneList';
+import { CloneChat } from '../../components/clones/chat/CloneChat/CloneChat';
+import { useClone } from '../../contexts/Clone/CloneContext';
+import { CloneProvider } from '../../contexts/Clone/CloneContext';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -96,12 +100,14 @@ function UserInfo() {
 }
 
 // Move the dashboard content to a separate component
-function DashboardContent() {
+const DashboardContent = React.memo(() => {
   const [workspaceWidth, setWorkspaceWidth] = useState(240);
   const [channelWidth, setChannelWidth] = useState(240);
   const [showMembers, setShowMembers] = useState(false);
   const { currentWorkspace, currentChannel } = useWorkspace();
   const { workspaceMembers, channelMembers, fetchWorkspaceMembers, fetchChannelMembers } = useMemberContext();
+  const { state: cloneState } = useClone();
+  const [showClones, setShowClones] = useState(false);
 
   useRealtimeMessages(currentChannel?.id);
   useRealtimeReactions(currentChannel?.id);
@@ -140,6 +146,15 @@ function DashboardContent() {
           <div className="p-4">
             <WorkspaceList />
           </div>
+        </div>
+        <div className="p-4 border-t border-text-secondary/10">
+          <Button
+            variant="secondary"
+            onClick={() => setShowClones(!showClones)}
+            className="w-full text-sm"
+          >
+            {showClones ? 'Back to Messages' : 'AI Clones'}
+          </Button>
         </div>
         <UserInfo />
         {/* Resize Handle */}
@@ -214,20 +229,37 @@ function DashboardContent() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-2 border-b border-text-secondary/10">
-          <DashboardHeader />
-          {(currentWorkspace || currentChannel) && (
-            <Button
-              variant="secondary"
-              onClick={() => setShowMembers(!showMembers)}
-              className="flex items-center gap-2"
-            >
-              <Users className="h-4 w-4" />
-              {showMembers ? 'Hide Members' : `Show Members (${memberCount})`}
-            </Button>
-          )}
-        </div>
-        <MessageList />
+        {showClones ? (
+          // Clones View
+          <div className="flex-1 overflow-y-auto p-4">
+            {cloneState.selectedClone ? (
+              <CloneChat 
+                cloneId={cloneState.selectedClone.id} 
+                channelId={currentChannel?.id}
+              />
+            ) : (
+              <CloneList key={currentWorkspace?.id} />
+            )}
+          </div>
+        ) : (
+          // Regular Messages View
+          <>
+            <div className="flex items-center justify-between px-4 py-2 border-b border-text-secondary/10">
+              <DashboardHeader />
+              {(currentWorkspace || currentChannel) && (
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowMembers(!showMembers)}
+                  className="flex items-center gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  {showMembers ? 'Hide Members' : `Show Members (${memberCount})`}
+                </Button>
+              )}
+            </div>
+            <MessageList />
+          </>
+        )}
       </div>
 
       {/* Members Sidebar */}
@@ -240,7 +272,7 @@ function DashboardContent() {
       )}
     </div>
   );
-}
+});
 
 // Main DashboardPage component now only handles providers and loading state
 export function DashboardPage() {
@@ -264,7 +296,9 @@ export function DashboardPage() {
     <WorkspaceProvider>
       <MessageProvider user={user}>
         <MemberProvider>
-          <DashboardContent />
+          <CloneProvider>
+            <DashboardContent />
+          </CloneProvider>
         </MemberProvider>
       </MessageProvider>
     </WorkspaceProvider>
