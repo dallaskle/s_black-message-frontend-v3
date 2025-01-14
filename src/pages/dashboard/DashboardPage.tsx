@@ -6,7 +6,6 @@ import { ChannelList } from '../../components/channel/ChannelList';
 import { MessageList } from '../../components/message/views/MessageList';
 import { WorkspaceProvider, useWorkspace } from '../../contexts/WorkspaceContext';
 import { MessageProvider } from '../../contexts/Message/MessageContext';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useAuth, useLogout } from '../../contexts/AuthContext';
 import Spinner from '../../components/ui/Spinner';
 import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
@@ -151,33 +150,9 @@ const DashboardContent = React.memo(() => {
   }
 
   return (
-<>
-<div className="h-screen bg-background-primary flex overflow-hidden">
+    <>
+      <div className="h-screen bg-background-primary flex overflow-hidden">
         {/* Workspace List */}
-      <div 
-        className="relative h-full flex flex-col bg-background-secondary border-r border-text-secondary/10"
-        style={{ 
-          width: `${workspaceWidth}px`,
-          minWidth: '180px',
-          maxWidth: '400px'
-        }}
-      >
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            <WorkspaceList />
-          </div>
-        </div>
-        <div className="p-4 border-t border-text-secondary/10">
-          <Button
-            variant="secondary"
-            onClick={() => setShowClones(!showClones)}
-            className="w-full text-sm"
-          >
-            {showClones ? 'Back to Messages' : 'AI Clones'}
-          </Button>
-        </div>
-        <UserInfo />
-        {/* Resize Handle */}
         <div 
           className="relative h-full flex flex-col bg-background-secondary border-r border-text-secondary/10"
           style={{ 
@@ -190,6 +165,15 @@ const DashboardContent = React.memo(() => {
             <div className="p-4">
               <WorkspaceList />
             </div>
+          </div>
+          <div className="p-4 border-t border-text-secondary/10">
+            <Button
+              variant="secondary"
+              onClick={() => setShowClones(!showClones)}
+              className="w-full text-sm"
+            >
+              {showClones ? 'Back to Messages' : 'AI Clones'}
+            </Button>
           </div>
           <UserInfo />
           {/* Resize Handle */}
@@ -262,51 +246,53 @@ const DashboardContent = React.memo(() => {
           </div>
         </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {showClones ? (
-          // Clones View
-          <div className="flex-1 overflow-y-auto p-4">
-            {cloneState.selectedClone ? (
-              <CloneChat 
-                cloneId={cloneState.selectedClone.id} 
-                channelId={currentChannel?.id}
-              />
-            ) : (
-              <CloneList key={currentWorkspace?.id} />
-            )}
-          </div>
-        ) : (
-          // Regular Messages View
-          <>
-            <div className="flex items-center justify-between px-4 py-2 border-b border-text-secondary/10">
-            <div className="flex items-center gap-4">
-              <DashboardHeader />
-            </div>
-            <div className="flex items-center gap-2">
-              {currentWorkspace && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setShowSettings(true)}
-                  className="h-8 w-8 p-0"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              )}
-              {(currentWorkspace || currentChannel) && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowMembers(!showMembers)}
-                  className="flex items-center gap-2"
-                >
-                  <Users className="h-4 w-4" />
-                  {showMembers ? 'Hide Members' : `Show Members (${memberCount})`}
-                </Button>
+        {/* Main content */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          {showClones ? (
+            // Clones View
+            <div className="flex-1 overflow-y-auto p-4">
+              {cloneState.selectedClone ? (
+                <CloneChat 
+                  cloneId={cloneState.selectedClone.id} 
+                  channelId={currentChannel?.id}
+                />
+              ) : (
+                <CloneList key={currentWorkspace?.id} />
               )}
             </div>
-            <MessageList />
-          </>
+          ) : (
+            // Regular Messages View
+            <>
+              <div className="flex items-center justify-between px-4 py-2 border-b border-text-secondary/10">
+                <div className="flex items-center gap-4">
+                  <DashboardHeader />
+                </div>
+                <div className="flex items-center gap-2">
+                  {currentWorkspace && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setShowSettings(true)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {(currentWorkspace || currentChannel) && (
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowMembers(!showMembers)}
+                      className="flex items-center gap-2"
+                    >
+                      <Users className="h-4 w-4" />
+                      {showMembers ? 'Hide Members' : `Show Members (${memberCount})`}
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <MessageList />
+            </>
+          )}
         </div>
 
         {/* Members Sidebar */}
