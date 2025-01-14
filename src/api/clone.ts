@@ -67,8 +67,27 @@ const cloneApi = {
     },
 
     // Chat
-    chat: (cloneId: string, data: ChatRequestDto): Promise<AxiosResponse<ChatResponseDto>> => 
-        axiosInstance.post(`${API_PREFIX}/clones/${cloneId}/chat`, data),
+    chat: (cloneId: string, data: ChatRequestDto): Promise<AxiosResponse<ChatResponseDto>> => {
+        console.log('[CloneAPI] Sending chat request:', {
+            cloneId,
+            message: data.message,
+            workspaceId: data.workspace_id,
+            channelId: data.channel_id
+        });
+        return axiosInstance.post(`${API_PREFIX}/clones/${cloneId}/chat`, data)
+            .then(response => {
+                console.log('[CloneAPI] Chat response received:', response.data);
+                return response;
+            })
+            .catch(error => {
+                console.error('[CloneAPI] Chat request failed:', {
+                    status: error.response?.status,
+                    data: error.response?.data,
+                    message: error.message
+                });
+                throw error;
+            });
+    },
 
     // Health Check
     checkHealth: (): Promise<AxiosResponse<HealthCheckResponse>> => 

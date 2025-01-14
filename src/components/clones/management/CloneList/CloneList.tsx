@@ -45,7 +45,6 @@ export const CloneList: React.FC = React.memo(() => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
             }
-            actions.setClones([]);
         };
     }, [currentWorkspace?.id]);
 

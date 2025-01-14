@@ -42,7 +42,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 disabled={!message.trim() || isLoading}
                 className="self-end"
             >
-                {isLoading ? <Spinner /> : 'Send'}
+                {isLoading ? <Spinner inline={true} /> : 'Send'}
             </Button>
         </div>
     );

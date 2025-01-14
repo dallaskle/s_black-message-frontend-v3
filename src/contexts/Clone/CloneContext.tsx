@@ -121,7 +121,7 @@ export const CloneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     }, []);
 
-    const selectClone = useCallback((clone: Clone) => {
+    const selectClone = useCallback((clone: Clone | null) => {
         dispatch({ type: 'SELECT_CLONE', payload: clone });
     }, []);
 
