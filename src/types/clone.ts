@@ -11,7 +11,7 @@ export interface Clone {
     created_by_user_id: string;
     created_at: string;
     updated_at: string;
-    documents?: CloneDocument[];
+    clone_documents?: CloneDocument[];
 }
 
 export interface CloneDocument {

@@ -8,7 +8,7 @@ interface CloneCardProps {
 }
 
 export const CloneCard: React.FC<CloneCardProps> = ({ clone, onSelect }) => {
-    const documentCount = clone.documents?.length || 0;
+    const documentCount = clone.clone_documents?.length || 0;
     
     return (
         <div 
