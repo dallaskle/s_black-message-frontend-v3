@@ -111,7 +111,6 @@ const DashboardContent = React.memo(() => {
   const { workspaceMembers, channelMembers, fetchWorkspaceMembers, fetchChannelMembers } = useMemberContext();
   const { state: cloneState } = useClone();
   const [showClones, setShowClones] = useState(false);
-  const navigate = useNavigate();
   useRealtimeMessages(currentChannel?.id);
   useRealtimeReactions(currentChannel?.id);
 

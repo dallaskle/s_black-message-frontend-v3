@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clone, DocumentStatus } from '../../../../types/clone';
+import { Clone } from '../../../../types/clone';
 import { Badge } from '../../../ui/badge';
 import { ChevronDown, ChevronUp, FileText } from 'lucide-react';
 
