@@ -27,14 +27,9 @@ const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
 interface MessageProviderProps {
   children: React.ReactNode;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  } | null;
 }
 
-export function MessageProvider({ children, user }: MessageProviderProps) {
+export function MessageProvider({ children }: MessageProviderProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [threadMessages, setThreadMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);

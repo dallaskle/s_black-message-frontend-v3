@@ -110,7 +110,7 @@ export function MessageList() {
             </div>
           ) : (
             <>
-              {groupedMessages.map((group, index) => (
+              {groupedMessages.map((group) => (
                 <div key={group.label}>
                   <div className="relative py-4">
                     <div className="absolute inset-0 flex items-center">

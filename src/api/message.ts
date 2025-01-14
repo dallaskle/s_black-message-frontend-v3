@@ -1,13 +1,12 @@
 import axiosInstance from './axiosConfig';
 import type { Message } from '../types/message';
-import type { FileUploadResponse } from '../types/file';
 
 // Update interface to use FileUploadResponse type
-interface MessageWithFile {
-  content: string;
-  parentMessageId?: string;
-  fileData?: FileUploadResponse;
-}
+// interface MessageWithFile {
+//   content: string;
+//   parentMessageId?: string;
+//   fileData?: FileUploadResponse;
+// }
 
 export const messageApi = {
   getChannelMessages: async (channelId: string, params?: {

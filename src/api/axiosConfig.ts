@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { authApi } from './auth';
-import type { RefreshAuthResponse } from '../types/auth';
+// import type { RefreshAuthResponse } from '../types/auth';
 
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 

@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/Button';
 import { WorkspaceList } from '../../components/workspace/WorkspaceList';
 import { ChannelList } from '../../components/channel/ChannelList';
 import { MessageList } from '../../components/message/views/MessageList';
-import { WorkspaceProvider } from '../../contexts/WorkspaceContext';
+import { WorkspaceProvider, useWorkspace } from '../../contexts/WorkspaceContext';
 import { MessageProvider } from '../../contexts/Message/MessageContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useAuth, useLogout } from '../../contexts/AuthContext';
@@ -13,12 +13,14 @@ import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
 import { useRealtimeReactions } from '../../hooks/useRealtimeReactions';
 import { MemberProvider } from '../../contexts/Member/MemberContext';
 import { MembersSidebar } from '../../components/members/MembersSidebar';
-import { Users } from 'lucide-react';
+import { Users, Settings } from 'lucide-react';
 import { useMemberContext } from '../../contexts/Member/MemberContext';
 import { CloneList } from '../../components/clones/management/CloneList/CloneList';
 import { CloneChat } from '../../components/clones/chat/CloneChat/CloneChat';
 import { useClone } from '../../contexts/Clone/CloneContext';
 import { CloneProvider } from '../../contexts/Clone/CloneContext';
+import AddWorkspaceModal from '../../components/workspace/AddWorkspaceModal';
+import WorkspaceSettingsModal from '../../components/workspace/WorkspaceSettingsModal';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -104,13 +106,22 @@ const DashboardContent = React.memo(() => {
   const [workspaceWidth, setWorkspaceWidth] = useState(240);
   const [channelWidth, setChannelWidth] = useState(240);
   const [showMembers, setShowMembers] = useState(false);
-  const { currentWorkspace, currentChannel } = useWorkspace();
+  const [showAddWorkspace, setShowAddWorkspace] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const { currentWorkspace, currentChannel, workspaces, isLoading: workspacesLoading } = useWorkspace();
   const { workspaceMembers, channelMembers, fetchWorkspaceMembers, fetchChannelMembers } = useMemberContext();
   const { state: cloneState } = useClone();
   const [showClones, setShowClones] = useState(false);
-
+  const navigate = useNavigate();
   useRealtimeMessages(currentChannel?.id);
   useRealtimeReactions(currentChannel?.id);
+
+  // Show add workspace modal when there are no workspaces, but only after loading
+  useEffect(() => {
+    if (!workspacesLoading && workspaces?.length === 0) {
+      setShowAddWorkspace(true);
+    }
+  }, [workspaces?.length, workspacesLoading]);
 
   // Fetch members whenever channel or workspace changes
   useEffect(() => {
@@ -126,14 +137,23 @@ const DashboardContent = React.memo(() => {
   }, [currentWorkspace?.id, fetchWorkspaceMembers]);
 
   const memberCount = currentChannel?.id 
-    ? channelMembers[currentChannel.id]?.length ?? 0 // For channels, only show channel members
+    ? channelMembers[currentChannel.id]?.length ?? 0
     : currentWorkspace?.id
     ? workspaceMembers[currentWorkspace.id]?.length ?? 0
     : 0;
 
+  if (workspacesLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
   return (
-    <div className="h-screen bg-background-primary flex overflow-hidden">
-      {/* Workspace List */}
+<>
+<div className="h-screen bg-background-primary flex overflow-hidden">
+        {/* Workspace List */}
       <div 
         className="relative h-full flex flex-col bg-background-secondary border-r border-text-secondary/10"
         style={{ 
@@ -159,73 +179,88 @@ const DashboardContent = React.memo(() => {
         <UserInfo />
         {/* Resize Handle */}
         <div 
-          className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
-          style={{ padding: '0 6px' }}
-          onMouseDown={(e) => {
-            const startX = e.clientX;
-            const startWidth = workspaceWidth;
-
-            const handleMouseMove = (moveEvent: MouseEvent) => {
-              const newWidth = startWidth + (moveEvent.clientX - startX);
-              if (newWidth >= 180 && newWidth <= 400) {
-                setWorkspaceWidth(newWidth);
-              }
-            };
-
-            const handleMouseUp = () => {
-              document.removeEventListener('mousemove', handleMouseMove);
-              document.removeEventListener('mouseup', handleMouseUp);
-            };
-
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
+          className="relative h-full flex flex-col bg-background-secondary border-r border-text-secondary/10"
+          style={{ 
+            width: `${workspaceWidth}px`,
+            minWidth: '180px',
+            maxWidth: '400px'
           }}
         >
-          <div className="h-full w-[2px] bg-text-secondary/10 group-hover:bg-accent-primary/50 group-active:bg-accent-primary" />
-        </div>
-      </div>
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4">
+              <WorkspaceList />
+            </div>
+          </div>
+          <UserInfo />
+          {/* Resize Handle */}
+          <div 
+            className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
+            style={{ padding: '0 6px' }}
+            onMouseDown={(e) => {
+              const startX = e.clientX;
+              const startWidth = workspaceWidth;
 
-      {/* Channel List */}
-      <div 
-        className="relative h-full flex flex-col bg-background-secondary/50 border-r border-text-secondary/10"
-        style={{ 
-          width: `${channelWidth}px`,
-          minWidth: '180px',
-          maxWidth: '400px'
-        }}
-      >
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            <ChannelList />
+              const handleMouseMove = (moveEvent: MouseEvent) => {
+                const newWidth = startWidth + (moveEvent.clientX - startX);
+                if (newWidth >= 180 && newWidth <= 400) {
+                  setWorkspaceWidth(newWidth);
+                }
+              };
+
+              const handleMouseUp = () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+              };
+
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+            }}
+          >
+            <div className="h-full w-[2px] bg-text-secondary/10 group-hover:bg-accent-primary/50 group-active:bg-accent-primary" />
           </div>
         </div>
-        {/* Resize Handle */}
+
+        {/* Channel List */}
         <div 
-          className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
-          style={{ padding: '0 6px' }}
-          onMouseDown={(e) => {
-            const startX = e.clientX;
-            const startWidth = channelWidth;
-
-            const handleMouseMove = (moveEvent: MouseEvent) => {
-              const newWidth = startWidth + (moveEvent.clientX - startX);
-              if (newWidth >= 180 && newWidth <= 400) {
-                setChannelWidth(newWidth);
-              }
-            };
-
-            const handleMouseUp = () => {
-              document.removeEventListener('mousemove', handleMouseMove);
-              document.removeEventListener('mouseup', handleMouseUp);
-            };
-
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
+          className="relative h-full flex flex-col bg-background-secondary/50 border-r border-text-secondary/10"
+          style={{ 
+            width: `${channelWidth}px`,
+            minWidth: '180px',
+            maxWidth: '400px'
           }}
         >
-          <div className="h-full w-[2px] bg-text-secondary/10 group-hover:bg-accent-primary/50 group-active:bg-accent-primary" />
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4">
+              <ChannelList />
+            </div>
+          </div>
+          {/* Resize Handle */}
+          <div 
+            className="absolute top-0 right-[-6px] bottom-0 w-3 cursor-col-resize hover:bg-accent-primary/50 active:bg-accent-primary group"
+            style={{ padding: '0 6px' }}
+            onMouseDown={(e) => {
+              const startX = e.clientX;
+              const startWidth = channelWidth;
+
+              const handleMouseMove = (moveEvent: MouseEvent) => {
+                const newWidth = startWidth + (moveEvent.clientX - startX);
+                if (newWidth >= 180 && newWidth <= 400) {
+                  setChannelWidth(newWidth);
+                }
+              };
+
+              const handleMouseUp = () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+              };
+
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+            }}
+          >
+            <div className="h-full w-[2px] bg-text-secondary/10 group-hover:bg-accent-primary/50 group-active:bg-accent-primary" />
+          </div>
         </div>
-      </div>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
@@ -245,7 +280,20 @@ const DashboardContent = React.memo(() => {
           // Regular Messages View
           <>
             <div className="flex items-center justify-between px-4 py-2 border-b border-text-secondary/10">
+            <div className="flex items-center gap-4">
               <DashboardHeader />
+            </div>
+            <div className="flex items-center gap-2">
+              {currentWorkspace && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowSettings(true)}
+                  className="h-8 w-8 p-0"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              )}
               {(currentWorkspace || currentChannel) && (
                 <Button
                   variant="secondary"
@@ -259,18 +307,28 @@ const DashboardContent = React.memo(() => {
             </div>
             <MessageList />
           </>
+        </div>
+
+        {/* Members Sidebar */}
+        {showMembers && (
+          <MembersSidebar
+            workspaceId={currentWorkspace?.id}
+            channelId={currentChannel?.id}
+            onClose={() => setShowMembers(false)}
+          />
         )}
       </div>
 
-      {/* Members Sidebar */}
-      {showMembers && (
-        <MembersSidebar
-          workspaceId={currentWorkspace?.id}
-          channelId={currentChannel?.id}
-          onClose={() => setShowMembers(false)}
-        />
-      )}
-    </div>
+      <AddWorkspaceModal 
+        isOpen={showAddWorkspace} 
+        onOpenChange={setShowAddWorkspace}
+      />
+
+      <WorkspaceSettingsModal
+        isOpen={showSettings}
+        onOpenChange={setShowSettings}
+      />
+    </>
   );
 });
 
@@ -294,7 +352,7 @@ export function DashboardPage() {
 
   return (
     <WorkspaceProvider>
-      <MessageProvider user={user}>
+      <MessageProvider>
         <MemberProvider>
           <CloneProvider>
             <DashboardContent />

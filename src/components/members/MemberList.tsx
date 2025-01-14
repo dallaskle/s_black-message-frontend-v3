@@ -1,10 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MemberListItem } from './MemberListItem';
 import { useMemberContext } from '../../contexts/Member/MemberContext';
 import { Input } from '../ui/input';
 import { Skeleton } from '../ui/skeleton';
 import { MemberWithUser } from '../../types/member';
 import { useAuth } from '../../contexts/AuthContext';
+import { Button } from '../ui/Button';
+import { UserPlus } from 'lucide-react';
+import InviteMemberModal from '../workspace/InviteMemberModal';
 
 interface MemberListProps {
   workspaceId?: string;
@@ -14,6 +17,7 @@ interface MemberListProps {
   onMemberSelect?: (member: MemberWithUser) => void;
   selectedMembers?: MemberWithUser[];
   excludeCurrentUser?: boolean;
+  showInviteButton?: boolean;
 }
 
 export const MemberList: React.FC<MemberListProps> = ({
@@ -23,8 +27,10 @@ export const MemberList: React.FC<MemberListProps> = ({
   onSearchChange,
   onMemberSelect,
   selectedMembers = [],
-  excludeCurrentUser = false
+  excludeCurrentUser = false,
+  showInviteButton = true
 }) => {
+  const [showInvite, setShowInvite] = useState(false);
   const {
     workspaceMembers,
     channelMembers,
@@ -73,15 +79,28 @@ export const MemberList: React.FC<MemberListProps> = ({
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      {onSearchChange && (
-        <Input
-          type="text"
-          placeholder="Search members..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full bg-background-primary text-text-primary placeholder:text-text-secondary"
-        />
-      )}
+      <div className="flex items-center gap-2">
+        {onSearchChange && (
+          <Input
+            type="text"
+            placeholder="Search members..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="flex-1 bg-background-primary text-text-primary placeholder:text-text-secondary"
+          />
+        )}
+        {workspaceId && showInviteButton && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowInvite(true)}
+            className="flex items-center gap-2"
+          >
+            <UserPlus className="h-4 w-4" />
+            Invite
+          </Button>
+        )}
+      </div>
       
       <div className="space-y-2">
         {loading ? (
@@ -105,6 +124,11 @@ export const MemberList: React.FC<MemberListProps> = ({
           </div>
         )}
       </div>
+
+      <InviteMemberModal
+        isOpen={showInvite}
+        onOpenChange={setShowInvite}
+      />
     </div>
   );
 }; 

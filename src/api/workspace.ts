@@ -26,6 +26,12 @@ export const workspaceApi = {
     return data;
   },
 
+  // Update a workspace
+  updateWorkspace: async (workspaceId: string, workspace: { name: string; workspace_url: string }) => {
+    const { data } = await axiosInstance.put<Workspace>(`/api/workspaces/${workspaceId}`, workspace);
+    return data;
+  },
+
   // Get workspace members
   getWorkspaceMembers: async (workspaceId: string) => {
     const { data } = await axiosInstance.get<WorkspaceMember[]>(

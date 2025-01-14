@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { authApi } from '../api/auth';
+import type { RegisterResponse } from '../api/auth';
 import { jwtDecode } from 'jwt-decode';
 import { useWorkspace } from './WorkspaceContext';
 import { useMessage } from './Message/MessageContext';
@@ -16,6 +17,12 @@ interface LoginCredentials {
   password: string;
 }
 
+interface RegisterCredentials {
+  email: string;
+  password: string;
+  name: string;
+}
+
 interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -24,6 +31,7 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
+  register: (credentials: RegisterCredentials) => Promise<RegisterResponse>;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
@@ -183,6 +191,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return refreshToken();
   }, [accessToken]);
 
+  const register = async (credentials: RegisterCredentials) => {
+    setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+    try {
+      const response = await authApi.register(credentials);
+      
+      // If we got back a session, set the authenticated state
+      if (response.session?.access_token) {
+        setAccessToken(response.session.access_token);
+        setAuthState({
+          isAuthenticated: true,
+          isLoading: false,
+          user: {
+            id: response.user.id,
+            email: response.user.email,
+            name: credentials.name // Use the name from credentials since we know it's valid
+          },
+          error: null
+        });
+        // Schedule token refresh
+        scheduleTokenRefresh(response.session.access_token);
+      } else {
+        setAuthState(prev => ({ 
+          ...prev, 
+          isLoading: false,
+          error: null
+        }));
+      }
+      
+      return response;
+    } catch (error) {
+      handleAuthError(error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -221,6 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         ...authState,
+        register,
         login,
         logout,
         getAccessToken,

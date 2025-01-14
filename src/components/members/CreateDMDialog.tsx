@@ -71,6 +71,7 @@ export const CreateDMDialog: React.FC = () => {
               onMemberSelect={handleMemberSelect}
               selectedMembers={selectedMembers}
               excludeCurrentUser
+              showInviteButton={false}
             />
             <div className="flex justify-end">
               <Button

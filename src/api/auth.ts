@@ -1,6 +1,6 @@
 import axiosInstance from './axiosConfig';
 import type { LoginCredentials, LoginAuthResponse, RefreshAuthResponse } from '../types/auth';
-import type { User } from '../types/User';
+// import type { User } from '../types/User';
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
@@ -16,13 +16,51 @@ const processQueue = (error: any = null, token: string | null = null) => {
   refreshSubscribers = [];
 };
 
+interface RegisterCredentials {
+  email: string;
+  password: string;
+  name: string;
+  autoVerify?: boolean;
+}
+
+export interface RegisterResponse {
+  message: string;
+  user: {
+    id: string;
+    email: string;
+  };
+  session?: {
+    access_token: string;
+  };
+}
+
 interface AuthApi {
+  register: (credentials: RegisterCredentials) => Promise<RegisterResponse>;
   login: (credentials: LoginCredentials) => Promise<LoginAuthResponse>;
   refreshToken: () => Promise<RefreshAuthResponse | null>;
   logout: () => Promise<void>;
+  verifyEmail: (email: string) => Promise<void>;
 }
 
 export const authApi: AuthApi = {
+  register: async (credentials: RegisterCredentials) => {
+    const { data } = await axiosInstance.post<RegisterResponse>('/auth/register', {
+      ...credentials,
+      autoVerify: true // Always auto-verify
+    });
+    
+    // If we get back a session, set it
+    if (data.session?.access_token) {
+      axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.session.access_token}`;
+    }
+    
+    return data;
+  },
+
+  verifyEmail: async (email: string) => {
+    await axiosInstance.post('/auth/verify-email', { email });
+  },
+
   login: async (credentials: LoginCredentials) => {
     const { data } = await axiosInstance.post<LoginAuthResponse>('/auth/login', credentials);
     

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../contexts/AuthContext';
@@ -16,7 +16,6 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
   const [error, setError] = useState<string>('');
-  const navigate = useNavigate();
   const { login } = useAuth();
   
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({

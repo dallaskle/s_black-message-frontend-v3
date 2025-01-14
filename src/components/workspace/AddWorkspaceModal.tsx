@@ -7,16 +7,26 @@ import { workspaceApi } from '../../api/workspace';
 import { CreateWorkspace } from './CreateWorkspace';
 import Spinner from '../ui/Spinner';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import InviteMemberModal from './InviteMemberModal';
 
-const AddWorkspaceModal = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface AddWorkspaceModalProps {
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+const AddWorkspaceModal = ({ isOpen: externalIsOpen, onOpenChange }: AddWorkspaceModalProps) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [workspaceUrl, setWorkspaceUrl] = useState('-workspace.s_black.com');
   const [isUrlManuallyEdited, setIsUrlManuallyEdited] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const { refreshWorkspaces, setCurrentWorkspaceByUrl } = useWorkspace();
+
+  // Use external or internal open state
+  const isModalOpen = externalIsOpen ?? internalIsOpen;
 
   // Auto-generate URL from name if not manually edited
   useEffect(() => {
@@ -40,9 +50,13 @@ const AddWorkspaceModal = () => {
       await refreshWorkspaces();
       setCurrentWorkspaceByUrl(workspaceUrl);
       
-      // Finally show success state
-      //setIsLoading(false);
       setIsSuccess(true);
+      setIsLoading(false);
+      
+      // Auto close after success
+      setTimeout(() => {
+        handleClose();
+      }, 1500);
     } catch (error: any) {
       setError(error.response?.data?.message || 'Failed to create workspace');
       setIsLoading(false);
@@ -57,7 +71,11 @@ const AddWorkspaceModal = () => {
 
   const handleClose = () => {
     if (!isLoading) {
-      setIsOpen(false);
+      if (onOpenChange) {
+        onOpenChange(false);
+      } else {
+        setInternalIsOpen(false);
+      }
       resetForm();
       setError(null);
       setIsSuccess(false);
@@ -67,13 +85,29 @@ const AddWorkspaceModal = () => {
   return (
     <>
       <div className="flex justify-center">
-        <CreateWorkspace onClick={() => setIsOpen(true)} />
+        <CreateWorkspace onClick={() => {
+          if (onOpenChange) {
+            onOpenChange(true);
+          } else {
+            setInternalIsOpen(true);
+          }
+        }} />
       </div>
-      <Dialog open={isOpen} onOpenChange={(open) => {
-        if (!isLoading) {
-          handleClose();
-        }
-      }}>
+      <Dialog 
+        open={isModalOpen} 
+        onOpenChange={(open) => {
+          if (!isLoading) {
+            if (onOpenChange) {
+              onOpenChange(open);
+            } else {
+              setInternalIsOpen(open);
+            }
+            if (!open) {
+              handleClose();
+            }
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[425px] bg-background-primary">
           <DialogHeader>
             <DialogTitle>
@@ -83,8 +117,13 @@ const AddWorkspaceModal = () => {
           {isSuccess ? (
             <div className="space-y-4">
               <p className="text-center">Congratulations! Your workspace has been created successfully.</p>
-              <div className="flex justify-center">
-                <Button onClick={handleClose}>Close</Button>
+              <div className="flex flex-col space-y-2">
+                <Button onClick={() => setShowInviteModal(true)}>
+                  Invite Members
+                </Button>
+                <Button onClick={handleClose} variant="secondary">
+                  Close
+                </Button>
               </div>
             </div>
           ) : (
@@ -135,6 +174,15 @@ const AddWorkspaceModal = () => {
           )}
         </DialogContent>
       </Dialog>
+      <InviteMemberModal 
+        isOpen={showInviteModal} 
+        onOpenChange={(open) => {
+          setShowInviteModal(open);
+          if (!open) {
+            handleClose();
+          }
+        }} 
+      />
     </>
   );
 };

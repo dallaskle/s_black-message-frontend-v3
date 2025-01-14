@@ -8,6 +8,7 @@ interface WorkspaceContextType {
   workspaces: WorkspaceWithChannels[];
   currentWorkspace: WorkspaceWithChannels | null;
   setCurrentWorkspaceByUrl: (workspace_url: string) => void;
+  setCurrentWorkspaceById: (workspace_id: string) => void;
   currentChannel: Channel | null;
   setCurrentChannel: (channel: Channel | null) => void;
   isLoading: boolean;
@@ -16,6 +17,7 @@ interface WorkspaceContextType {
   refreshCurrentWorkspaceChannels: () => Promise<void>;
   addChannelToWorkspace: (channel: Channel) => void;
   deleteChannel: (channelId: string) => Promise<void>;
+  updateWorkspace: (workspace: WorkspaceWithChannels) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -123,6 +125,20 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateWorkspace = (updatedWorkspace: WorkspaceWithChannels) => {
+    // Update current workspace if it's the one being updated
+    if (currentWorkspace?.id === updatedWorkspace.id) {
+      setCurrentWorkspace(updatedWorkspace);
+    }
+    
+    // Update workspaces list
+    setWorkspaces(prevWorkspaces =>
+      prevWorkspaces.map(w =>
+        w.id === updatedWorkspace.id ? updatedWorkspace : w
+      )
+    );
+  };
+
   // Initial load
   useEffect(() => {
     refreshWorkspaces();
@@ -144,12 +160,24 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setCurrentWorkspaceById = (workspace_id: string) => {
+    if (!workspace_id) {
+      setCurrentWorkspace(null);
+      return;
+    }
+    const workspace = workspaces.find(w => w.id === workspace_id);
+    if (workspace) {
+      setCurrentWorkspace(workspace);
+    }
+  };
+
   return (
     <WorkspaceContext.Provider
       value={{
         workspaces,
         currentWorkspace,
         setCurrentWorkspaceByUrl,
+        setCurrentWorkspaceById,
         currentChannel,
         setCurrentChannel,
         isLoading,
@@ -158,6 +186,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         refreshCurrentWorkspaceChannels,
         addChannelToWorkspace,
         deleteChannel,
+        updateWorkspace,
       }}
     >
       {children}
