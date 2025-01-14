@@ -18,6 +18,14 @@ interface EditFormData {
     base_prompt: string;
 }
 
+const TypingIndicator = () => (
+    <div className="flex items-center gap-1 text-gray-500 text-sm p-4">
+        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+    </div>
+);
+
 export const CloneChat: React.FC<CloneChatProps> = ({ cloneId, channelId }) => {
     const { state, actions } = useClone();
     const [showSettings, setShowSettings] = useState(false);
@@ -148,6 +156,7 @@ export const CloneChat: React.FC<CloneChatProps> = ({ cloneId, channelId }) => {
 
             <div className="flex-1 overflow-y-auto p-4">
                 <ChatHistory messages={chatHistory} />
+                {state.isLoading && chatHistory.length > 0 && <TypingIndicator />}
             </div>
 
             <div className="border-t p-4">
