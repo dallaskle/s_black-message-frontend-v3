@@ -87,7 +87,7 @@ function App() {
               } 
             />
             <Route 
-              path="/workspace/:workspaceId/invite/:token" 
+              path="/workspaces/:workspaceId/invite/:token" 
               element={
                 <ProtectedRoute>
                   <AcceptInvitePage />
