@@ -32,7 +32,7 @@ const AcceptInvite = () => {
     try {
       await workspaceInviteApi.acceptInvite(workspaceId, token);
       await refreshWorkspaces();
-      navigate(`/workspace/${workspaceId}`);
+      navigate(`/`);
     } catch (error: any) {
       setError(error.response?.data?.message || 'Failed to accept invitation');
       setIsAccepting(false);
