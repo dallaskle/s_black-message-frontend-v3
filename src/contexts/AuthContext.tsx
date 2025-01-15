@@ -5,6 +5,8 @@ import { jwtDecode } from 'jwt-decode';
 import { useWorkspace } from './WorkspaceContext';
 import { useMessage } from './Message/MessageContext';
 import axiosInstance from '../api/axiosConfig';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { saveInviteUrl } from '../utils/inviteStorage';
 
 interface User {
   id: string;
@@ -49,6 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshTimeout, setRefreshTimeout] = useState<NodeJS.Timeout>();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const clearError = useCallback(() => {
     setAuthState(prev => ({ ...prev, error: null }));
@@ -92,6 +96,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Error scheduling token refresh:', error);
     }
   }, [refreshTimeout]);
+
+  // Handle auth-required redirects
+  useEffect(() => {
+    if (!authState.isLoading && !authState.isAuthenticated) {
+      // Check if this is an invite URL before redirecting
+      if (location.pathname.includes('/workspaces/') && location.pathname.includes('/invite/')) {
+        console.log('🔒 Auth required for invite URL, saving before redirect:', location.pathname);
+        saveInviteUrl(location.pathname);
+      }
+      
+      if (!location.pathname.includes('/login') && 
+          !location.pathname.includes('/register') && 
+          !location.pathname.includes('/email-verification') &&
+          !location.pathname.includes('/email-login')) {
+        navigate('/login');
+      }
+    }
+  }, [authState.isLoading, authState.isAuthenticated, location.pathname, navigate]);
 
   const login = async (credentials: LoginCredentials) => {
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));

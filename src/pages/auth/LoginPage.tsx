@@ -25,8 +25,9 @@ export function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       await login(data);
-      // The navigation will be handled by the AuthContext
+      // Auth context will handle navigation
     } catch (err) {
+      console.error('❌ Login failed:', err);
       setError('Invalid credentials');
     }
   };

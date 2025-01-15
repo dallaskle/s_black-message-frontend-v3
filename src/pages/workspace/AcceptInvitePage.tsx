@@ -22,9 +22,8 @@ const AcceptInvitePage = () => {
 
       try {
         await workspaceInviteApi.acceptInvite(workspaceId, token);
-        await refreshWorkspaces();
         // Navigate to the workspace
-        navigate(`/workspace/${workspaceId}`);
+        navigate(`/`);
       } catch (error: any) {
         setError(error.response?.data?.message || 'Failed to accept invitation');
         setIsLoading(false);
@@ -43,21 +42,17 @@ const AcceptInvitePage = () => {
     );
   }
 
-  if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
-        <div className="text-red-500 text-center">
-          <p className="text-lg font-semibold">Error</p>
-          <p>{error}</p>
+        <div className="text-white-500 text-center">
+          <p className="text-lg font-semibold">Accepted Invitation</p>
+          <p>You have been added to the workspace. You'll be redirected to the dashboard shortly.</p>
         </div>
         <Button onClick={() => navigate('/')}>
           Return to Home
         </Button>
       </div>
     );
-  }
-
-  return null;
 };
 
 export default AcceptInvitePage; 

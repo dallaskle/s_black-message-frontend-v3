@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/Button';
 import S_Black_Full_Logo from '../../../public/S_Black_Full_Logo.png';
+import { getInviteUrl, clearInviteUrl } from '../../utils/inviteStorage';
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -35,16 +36,19 @@ export function RegisterPage() {
       setError('');
       setSuccessMessage('');
       
+      console.log('📝 Attempting to register user:', data.email);
       // Register the user with auto-verification
       const response = await registerUser(data);
       
       // If we got back a session, we're already logged in
       if (response.session?.access_token) {
-        setSuccessMessage('Registration successful! Redirecting to dashboard...');
+        console.log('✅ Registration successful with auto-verification');
+        setSuccessMessage('Registration successful! Redirecting...');
         setTimeout(() => {
           navigate('/dashboard');
         }, 1000);
       } else {
+        console.log('📧 Manual verification required, redirecting to email verification');
         // Fallback to manual verification if auto-verify failed
         setSuccessMessage('Registration successful! Please check your email to verify your account.');
         setTimeout(() => {
@@ -54,7 +58,7 @@ export function RegisterPage() {
         }, 2000);
       }
     } catch (err: any) {
-      console.error('Registration error:', err);
+      console.error('❌ Registration failed:', err);
       if (err?.response?.data?.message) {
         setError(err.response.data.message);
       } else if (err?.message?.includes('already registered')) {

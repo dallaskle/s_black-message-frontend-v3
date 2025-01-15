@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { workspaceInviteApi } from '../../api/workspaceInvite';
 import { Button } from '../ui/Button';
 import Spinner from '../ui/Spinner';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { saveInviteUrl, getInviteUrl } from '../../utils/inviteStorage';
 
 const AcceptInvite = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -12,28 +13,62 @@ const AcceptInvite = () => {
   const [isAccepting, setIsAccepting] = useState(false);
   const { workspaceId, token } = useParams<{ workspaceId: string; token: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user } = useAuth();
   const { refreshWorkspaces } = useWorkspace();
 
   useEffect(() => {
+    console.log('🔄 AcceptInvite mounted/updated', {
+      isAuthenticated,
+      workspaceId,
+      token,
+      pathname: location.pathname,
+      existingInviteUrl: getInviteUrl()
+    });
+
     if (!isAuthenticated) {
-      // Save the invitation URL to redirect back after login
-      const inviteUrl = window.location.pathname;
-      navigate(`/login?redirect=${encodeURIComponent(inviteUrl)}`);
+      console.log('👤 User not authenticated, preparing to save invite URL');
+      
+      // Get the full invite URL
+      const inviteUrl = location.pathname;
+      console.log('🔗 Current location:', {
+        pathname: location.pathname,
+        fullUrl: window.location.href,
+        inviteUrl
+      });
+
+      try {
+        saveInviteUrl(inviteUrl);
+        const savedUrl = getInviteUrl(); // Verify it was saved
+        console.log('✅ Invite URL saved and verified:', savedUrl);
+      } catch (error) {
+        console.error('❌ Error saving invite URL:', error);
+      }
+
+      console.log('🚀 Redirecting to login page');
+      navigate(`/login`);
+    } else {
+      console.log('👤 User is authenticated, ready to accept invite', { userId: user?.id });
+      setIsLoading(false);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, location, workspaceId, token, user]);
 
   const handleAcceptInvite = async () => {
-    if (!workspaceId || !token || !user) return;
+    if (!workspaceId || !token || !user) {
+      console.log('❌ Missing required data:', { workspaceId, token, userId: user?.id });
+      return;
+    }
 
+    console.log('🤝 Attempting to accept invite:', { workspaceId, token });
     setIsAccepting(true);
     setError(null);
 
     try {
       await workspaceInviteApi.acceptInvite(workspaceId, token);
-      await refreshWorkspaces();
+      console.log('✅ Successfully accepted invite');
       navigate(`/`);
     } catch (error: any) {
+      console.error('❌ Failed to accept invite:', error);
       setError(error.response?.data?.message || 'Failed to accept invitation');
       setIsAccepting(false);
     }

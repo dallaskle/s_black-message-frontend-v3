@@ -20,6 +20,7 @@ import { useClone } from '../../contexts/Clone/CloneContext';
 import { CloneProvider } from '../../contexts/Clone/CloneContext';
 import AddWorkspaceModal from '../../components/workspace/AddWorkspaceModal';
 import WorkspaceSettingsModal from '../../components/workspace/WorkspaceSettingsModal';
+import { getInviteUrl, clearInviteUrl } from '../../utils/inviteStorage';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -321,6 +322,19 @@ const DashboardContent = React.memo(() => {
 export function DashboardPage() {
   const { isLoading, user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check for saved invite URL when dashboard mounts and user is authenticated
+    if (user) {
+      const savedInviteUrl = getInviteUrl();
+      console.log('🔍 Checking for saved invite URL on dashboard:', savedInviteUrl);
+      if (savedInviteUrl) {
+        console.log('➡️ Redirecting to saved invite URL from dashboard:', savedInviteUrl);
+        clearInviteUrl();
+        navigate(savedInviteUrl);
+      }
+    }
+  }, [user, navigate]);
 
   if (isLoading) {
     return (
