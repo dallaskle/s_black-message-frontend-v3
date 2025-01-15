@@ -1,43 +1,43 @@
 import { useEffect, useState } from 'react';
-import { workspaceInviteApi, WorkspaceInvitation } from '../../api/workspaceInvite';
+import { WorkspaceInvitation } from '../../types/workspace';
+import { workspaceInviteApi } from '../../api/workspaceInvite';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { Button } from '../ui/Button';
 import Spinner from '../ui/Spinner';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 
 const InviteList = () => {
-  const [invites, setInvites] = useState<WorkspaceInvitation[]>([]);
+  const [invitations, setInvitations] = useState<WorkspaceInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { currentWorkspace } = useWorkspace();
 
-  const loadInvites = async () => {
+  const fetchInvitations = async () => {
     if (!currentWorkspace) return;
     
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      const data = await workspaceInviteApi.getInvites(currentWorkspace.id);
-      setInvites(data);
-      setError(null);
+      const data = await workspaceInviteApi.getInvitations(currentWorkspace.id);
+      setInvitations(data);
     } catch (error: any) {
-      console.error('Error loading invites:', error);
-      setInvites([]);
-      setError('No invites found');
+      setError(error.response?.data?.message || 'Failed to fetch invitations');
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadInvites();
-  }, [currentWorkspace]);
+    fetchInvitations();
+  }, [currentWorkspace?.id]);
 
   const handleRevoke = async (invitationId: string) => {
     if (!currentWorkspace) return;
     
     try {
       await workspaceInviteApi.revokeInvite(currentWorkspace.id, invitationId);
-      // Refresh the list
-      loadInvites();
+      setInvitations(invitations.filter(invite => invite.id !== invitationId));
     } catch (error: any) {
       setError(error.response?.data?.message || 'Failed to revoke invitation');
     }
@@ -46,22 +46,22 @@ const InviteList = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center p-4">
-        <Spinner size={24} />
+        <Spinner />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-gray-500 text-sm p-4 text-center">
+      <div className="text-red-500 p-4 text-center">
         {error}
       </div>
     );
   }
 
-  if (invites.length === 0) {
+  if (invitations.length === 0) {
     return (
-      <div className="text-center text-gray-500 p-4">
+      <div className="text-center p-4 text-gray-500">
         No pending invitations
       </div>
     );
@@ -70,28 +70,24 @@ const InviteList = () => {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Pending Invitations</h3>
-      <div className="space-y-2">
-        {invites.map((invite) => (
-          <div
-            key={invite.id}
-            className="flex items-center justify-between p-3 bg-background-secondary rounded-lg"
-          >
-            <div className="space-y-1">
-              <div className="font-medium">{invite.email}</div>
-              <div className="text-sm text-gray-500">
-                Role: {invite.role}
-                {' • '}
-                Sent {formatDistanceToNow(new Date(invite.created_at))} ago
-                {invite.expires_at && (
-                  <>
-                    {' • '}
-                    Expires {formatDistanceToNow(new Date(invite.expires_at))}
-                  </>
+      <div className="divide-y">
+        {invitations.map((invitation) => (
+          <div key={invitation.id} className="py-3 flex items-center justify-between">
+            <div>
+              <p className="font-medium">{invitation.email}</p>
+              <div className="text-sm text-gray-500 space-y-1">
+                <p>Role: {invitation.role}</p>
+                <p>Sent: {format(new Date(invitation.created_at), 'MMM d, yyyy')}</p>
+                {invitation.expires_at && (
+                  <p>
+                    Expires: {format(new Date(invitation.expires_at), 'MMM d, yyyy')}
+                  </p>
                 )}
+                {invitation.single_use && <p>Single-use invitation</p>}
               </div>
             </div>
             <Button
-              onClick={() => handleRevoke(invite.id)}
+              onClick={() => handleRevoke(invitation.id)}
               variant="destructive"
               size="sm"
             >

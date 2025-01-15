@@ -7,19 +7,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { workspaceInviteApi } from '../../api/workspaceInvite';
 import Spinner from '../ui/Spinner';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { Switch } from '../ui/switch';
 
 interface InviteMemberModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+const EXPIRATION_OPTIONS = [
+  { value: 86400000, label: '24 hours' },
+  { value: 259200000, label: '3 days' },
+  { value: 604800000, label: '7 days' },
+  { value: 0, label: 'Never' }
+];
+
 const InviteMemberModal = ({ isOpen, onOpenChange }: InviteMemberModalProps) => {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'member' | 'admin'>('member');
+  const [expiresIn, setExpiresIn] = useState<number>(EXPIRATION_OPTIONS[0].value);
+  const [singleUse, setSingleUse] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, refreshInvitations } = useWorkspace();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +43,11 @@ const InviteMemberModal = ({ isOpen, onOpenChange }: InviteMemberModalProps) => 
         workspaceId: currentWorkspace.id,
         email,
         role,
-        singleUse: true
+        singleUse,
+        expiresIn: expiresIn || undefined
       });
+      
+      await refreshInvitations();
       
       setIsSuccess(true);
       setIsLoading(false);
@@ -52,6 +65,8 @@ const InviteMemberModal = ({ isOpen, onOpenChange }: InviteMemberModalProps) => 
   const resetForm = () => {
     setEmail('');
     setRole('member');
+    setExpiresIn(EXPIRATION_OPTIONS[0].value);
+    setSingleUse(true);
   };
 
   const handleClose = () => {
@@ -107,6 +122,31 @@ const InviteMemberModal = ({ isOpen, onOpenChange }: InviteMemberModalProps) => 
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="expiration">Expires In</Label>
+              <Select 
+                value={expiresIn.toString()} 
+                onValueChange={(value) => setExpiresIn(parseInt(value))}
+              >
+                <SelectTrigger className="bg-background-primary">
+                  <SelectValue placeholder="Select expiration" />
+                </SelectTrigger>
+                <SelectContent className="bg-background-primary">
+                  {EXPIRATION_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value.toString()}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={singleUse}
+                onCheckedChange={setSingleUse}
+              />
+              <Label htmlFor="single-use">Single-use invitation</Label>
             </div>
             <div className="flex justify-end space-x-2">
               <Button type="button" onClick={handleClose}>

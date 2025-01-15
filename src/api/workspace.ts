@@ -28,7 +28,7 @@ export const workspaceApi = {
 
   // Update a workspace
   updateWorkspace: async (workspaceId: string, workspace: { name: string; workspace_url: string }) => {
-    const { data } = await axiosInstance.put<Workspace>(`/api/workspaces/${workspaceId}`, workspace);
+    const { data } = await axiosInstance.patch<Workspace>(`/api/workspaces/${workspaceId}`, workspace);
     return data;
   },
 

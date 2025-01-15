@@ -22,3 +22,15 @@ export interface WorkspaceMember {
 export interface WorkspaceWithChannels extends Workspace {
   channels: Channel[];
 }
+
+export interface WorkspaceInvitation {
+  id: string;
+  workspace_id: string;
+  email: string;
+  token: string;
+  role: 'admin' | 'member';
+  expires_at: string | null;
+  single_use: boolean;
+  created_by: string;
+  created_at: string;
+}

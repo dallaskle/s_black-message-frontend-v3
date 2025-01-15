@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { workspaceApi } from '../api/workspace';
-import type { WorkspaceWithChannels } from '../types/workspace';
+import { workspaceInviteApi } from '../api/workspaceInvite';
+import type { WorkspaceWithChannels, WorkspaceInvitation } from '../types/workspace';
 import type { Channel } from '../types/channel';
 import { channelApi } from '../api/channel';
 
@@ -18,6 +19,10 @@ interface WorkspaceContextType {
   addChannelToWorkspace: (channel: Channel) => void;
   deleteChannel: (channelId: string) => Promise<void>;
   updateWorkspace: (workspace: WorkspaceWithChannels) => void;
+  invitations: WorkspaceInvitation[];
+  refreshInvitations: () => Promise<void>;
+  createInvitation: (email: string, role: 'admin' | 'member', singleUse?: boolean, expiresIn?: number) => Promise<void>;
+  revokeInvitation: (invitationId: string) => Promise<void>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -28,6 +33,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [currentChannel, setCurrentChannel] = useState<Channel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [invitations, setInvitations] = useState<WorkspaceInvitation[]>([]);
 
   const refreshWorkspaces = async () => {
     setIsLoading(true);
@@ -80,6 +86,50 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setError('Failed to fetch channels');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const refreshInvitations = async () => {
+    if (!currentWorkspace) return;
+    
+    try {
+      const data = await workspaceInviteApi.getInvitations(currentWorkspace.id);
+      setInvitations(data);
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'Failed to fetch invitations');
+    }
+  };
+
+  const createInvitation = async (
+    email: string,
+    role: 'admin' | 'member',
+    singleUse: boolean = true,
+    expiresIn?: number
+  ) => {
+    if (!currentWorkspace) return;
+
+    try {
+      await workspaceInviteApi.createInvite({
+        workspaceId: currentWorkspace.id,
+        email,
+        role,
+        singleUse,
+        expiresIn
+      });
+      await refreshInvitations();
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to create invitation');
+    }
+  };
+
+  const revokeInvitation = async (invitationId: string) => {
+    if (!currentWorkspace) return;
+
+    try {
+      await workspaceInviteApi.revokeInvite(currentWorkspace.id, invitationId);
+      setInvitations(invitations.filter(invite => invite.id !== invitationId));
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to revoke invitation');
     }
   };
 
@@ -147,6 +197,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   // Reset current channel when workspace changes
   useEffect(() => {
     setCurrentChannel(null);
+    if (currentWorkspace) {
+      refreshInvitations();
+    }
   }, [currentWorkspace?.id]);
 
   const setCurrentWorkspaceByUrl = (workspace_url: string) => {
@@ -187,6 +240,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         addChannelToWorkspace,
         deleteChannel,
         updateWorkspace,
+        invitations,
+        refreshInvitations,
+        createInvitation,
+        revokeInvitation,
       }}
     >
       {children}

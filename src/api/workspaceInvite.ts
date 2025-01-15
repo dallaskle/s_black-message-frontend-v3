@@ -1,52 +1,44 @@
-import { axiosInstance } from './axiosConfig';
-
-export interface WorkspaceInvitation {
-  id: string;
-  workspace_id: string;
-  email: string;
-  token: string;
-  role: 'admin' | 'member';
-  expires_at: string | null;
-  single_use: boolean;
-  created_by: string;
-  created_at: string;
-}
+import axiosInstance from './axiosConfig';
+import { WorkspaceInvitation } from '../types/workspace';
 
 interface CreateInviteParams {
   workspaceId: string;
   email: string;
-  role?: 'admin' | 'member';
-  expiresIn?: number;
+  role: 'admin' | 'member';
   singleUse?: boolean;
+  expiresIn?: number;
 }
 
 export const workspaceInviteApi = {
-  createInvite: async (params: CreateInviteParams) => {
-    const { data } = await axiosInstance.post<WorkspaceInvitation>(
-      `/workspace/${params.workspaceId}/invites`, 
-      params
+  // Create a new invitation
+  createInvite: async (params: CreateInviteParams): Promise<WorkspaceInvitation> => {
+    const { workspaceId, ...data } = params;
+    const { data: invitation } = await axiosInstance.post<WorkspaceInvitation>(
+      `/api/workspaces/${workspaceId}/invitations`,
+      data
     );
-    return data;
+    return invitation;
   },
-    
-  getInvites: async (workspaceId: string) => {
-    const { data } = await axiosInstance.get<WorkspaceInvitation[]>(
-      `/workspace/${workspaceId}/invites`
+
+  // Get all invitations for a workspace
+  getInvitations: async (workspaceId: string): Promise<WorkspaceInvitation[]> => {
+    const { data: invitations } = await axiosInstance.get<WorkspaceInvitation[]>(
+      `/api/workspaces/${workspaceId}/invitations`
     );
-    return data;
+    return invitations;
   },
-    
-  acceptInvite: async (workspaceId: string, token: string) => {
-    const { data } = await axiosInstance.post(
-      `/workspace/${workspaceId}/invites/accept`, 
-      { token }
-    );
-    return data;
+
+  // Accept an invitation
+  acceptInvite: async (workspaceId: string, token: string): Promise<void> => {
+    await axiosInstance.post(`/api/workspaces/${workspaceId}/invitations/accept`, {
+      token,
+    });
   },
-    
-  revokeInvite: async (workspaceId: string, invitationId: string) => {
+
+  // Revoke an invitation
+  revokeInvite: async (workspaceId: string, invitationId: string): Promise<void> => {
     await axiosInstance.delete(
-      `/workspace/${workspaceId}/invites/${invitationId}`
+      `/api/workspaces/${workspaceId}/invitations/${invitationId}`
     );
-  }
+  },
 }; 
