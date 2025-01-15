@@ -107,7 +107,7 @@ const DashboardContent = React.memo(() => {
   const [showMembers, setShowMembers] = useState(false);
   const [showAddWorkspace, setShowAddWorkspace] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const { currentWorkspace, currentChannel, workspaces, isLoading: workspacesLoading } = useWorkspace();
+  const { currentWorkspace, currentChannel, workspaces, isLoading: workspacesLoading, isAdmin } = useWorkspace();
   const { workspaceMembers, channelMembers, fetchWorkspaceMembers, fetchChannelMembers } = useMemberContext();
   const { state: cloneState } = useClone();
   const [showClones, setShowClones] = useState(false);
@@ -267,7 +267,7 @@ const DashboardContent = React.memo(() => {
                   <DashboardHeader />
                 </div>
                 <div className="flex items-center gap-2">
-                  {currentWorkspace && (
+                  {currentWorkspace && isAdmin && (
                     <Button
                       variant="secondary"
                       size="sm"

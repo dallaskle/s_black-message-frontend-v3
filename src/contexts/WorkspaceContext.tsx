@@ -1,13 +1,17 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { workspaceApi } from '../api/workspace';
 import { workspaceInviteApi } from '../api/workspaceInvite';
-import type { WorkspaceWithChannels, WorkspaceInvitation } from '../types/workspace';
+import type { WorkspaceWithChannels, WorkspaceInvitation, WorkspaceMember } from '../types/workspace';
 import type { Channel } from '../types/channel';
 import { channelApi } from '../api/channel';
+import { useAuth } from './AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 interface WorkspaceContextType {
   workspaces: WorkspaceWithChannels[];
   currentWorkspace: WorkspaceWithChannels | null;
+  currentWorkspaceMember: WorkspaceMember | null;
+  isAdmin: boolean;
   setCurrentWorkspaceByUrl: (workspace_url: string) => void;
   setCurrentWorkspaceById: (workspace_id: string) => void;
   currentChannel: Channel | null;
@@ -28,12 +32,17 @@ interface WorkspaceContextType {
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [workspaces, setWorkspaces] = useState<WorkspaceWithChannels[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<WorkspaceWithChannels | null>(null);
+  const [currentWorkspaceMember, setCurrentWorkspaceMember] = useState<WorkspaceMember | null>(null);
   const [currentChannel, setCurrentChannel] = useState<Channel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [invitations, setInvitations] = useState<WorkspaceInvitation[]>([]);
+
+  // Check if current user is admin
+  const isAdmin = currentWorkspaceMember?.role === 'admin';
 
   const refreshWorkspaces = async () => {
     setIsLoading(true);
@@ -202,6 +211,32 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [currentWorkspace?.id]);
 
+  // Add this new effect to update currentWorkspaceMember when workspace changes
+  useEffect(() => {
+    const fetchMemberRole = async () => {
+      if (!currentWorkspace || !user) {
+        setCurrentWorkspaceMember(null);
+        return;
+      }
+
+      try {
+        const { data: member } = await supabase
+          .from('workspace_members')
+          .select('*')
+          .eq('workspace_id', currentWorkspace.id)
+          .eq('user_id', user.id)
+          .single();
+
+        setCurrentWorkspaceMember(member);
+      } catch (error) {
+        console.error('Error fetching member role:', error);
+        setCurrentWorkspaceMember(null);
+      }
+    };
+
+    fetchMemberRole();
+  }, [currentWorkspace?.id, user?.id]);
+
   const setCurrentWorkspaceByUrl = (workspace_url: string) => {
     if (!workspace_url) {
       setCurrentWorkspace(null);
@@ -229,6 +264,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       value={{
         workspaces,
         currentWorkspace,
+        currentWorkspaceMember,
+        isAdmin,
         setCurrentWorkspaceByUrl,
         setCurrentWorkspaceById,
         currentChannel,

@@ -13,7 +13,11 @@ const InviteList = () => {
   const { currentWorkspace } = useWorkspace();
 
   const fetchInvitations = async () => {
-    if (!currentWorkspace) return;
+    if (!currentWorkspace) {
+      setInvitations([]);
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     setError(null);

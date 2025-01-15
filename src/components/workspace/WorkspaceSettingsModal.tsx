@@ -18,7 +18,7 @@ interface WorkspaceSettingsModalProps {
 
 const WorkspaceSettingsModal = ({ isOpen, onOpenChange }: WorkspaceSettingsModalProps) => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const { currentWorkspace, updateWorkspace, refreshInvitations } = useWorkspace();
+  const { currentWorkspace, updateWorkspace, refreshInvitations, isAdmin } = useWorkspace();
   const [name, setName] = useState(currentWorkspace?.name || '');
   const [workspaceUrl, setWorkspaceUrl] = useState(currentWorkspace?.workspace_url || '');
   const [error, setError] = useState<string | null>(null);
@@ -76,12 +76,12 @@ const WorkspaceSettingsModal = ({ isOpen, onOpenChange }: WorkspaceSettingsModal
   const handleInviteModalClose = (open: boolean) => {
     setIsInviteModalOpen(open);
     if (!open) {
-      // Refresh invitations list when modal closes
       refreshInvitations();
     }
   };
 
   return (
+    <> isAdmin ?
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[600px] bg-background-primary">
@@ -92,7 +92,7 @@ const WorkspaceSettingsModal = ({ isOpen, onOpenChange }: WorkspaceSettingsModal
           <Tabs defaultValue="members" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="members">Members & Invites</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
+              {isAdmin && <TabsTrigger value="settings">Settings</TabsTrigger>}
             </TabsList>
 
             <TabsContent value="members" className="space-y-4">
@@ -106,62 +106,64 @@ const WorkspaceSettingsModal = ({ isOpen, onOpenChange }: WorkspaceSettingsModal
               <InviteList />
             </TabsContent>
 
-            <TabsContent value="settings">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Workspace Settings</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {error && (
-                    <div className="text-red-500 text-sm p-2 bg-red-50 rounded">
-                      {error}
+            {isAdmin && (
+              <TabsContent value="settings">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Workspace Settings</h3>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    {error && (
+                      <div className="text-red-500 text-sm p-2 bg-red-50 rounded">
+                        {error}
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Workspace Name</Label>
+                      <Input
+                        id="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter workspace name"
+                        required
+                      />
                     </div>
-                  )}
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Workspace Name</Label>
-                    <Input
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Enter workspace name"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="workspaceUrl">Workspace URL</Label>
-                    <Input
-                      id="workspaceUrl"
-                      value={workspaceUrl}
-                      onChange={(e) => setWorkspaceUrl(e.target.value)}
-                      placeholder="Enter workspace URL"
-                      required
-                    />
-                    <p className="text-sm text-gray-500">
-                      This URL will be used for workspace access and sharing
-                    </p>
-                  </div>
-                  <div className="pt-4 border-t">
-                    <h4 className="font-medium mb-2">Danger Zone</h4>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      onClick={() => {
-                        // TODO: Implement delete workspace functionality
-                        alert('Delete workspace functionality to be implemented');
-                      }}
-                    >
-                      Delete Workspace
-                    </Button>
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button type="button" onClick={handleClose}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={isLoading}>
-                      {isLoading ? <Spinner inline size={16} /> : 'Save Changes'}
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            </TabsContent>
+                    <div className="space-y-2">
+                      <Label htmlFor="workspaceUrl">Workspace URL</Label>
+                      <Input
+                        id="workspaceUrl"
+                        value={workspaceUrl}
+                        onChange={(e) => setWorkspaceUrl(e.target.value)}
+                        placeholder="Enter workspace URL"
+                        required
+                      />
+                      <p className="text-sm text-gray-500">
+                        This URL will be used for workspace access and sharing
+                      </p>
+                    </div>
+                    <div className="pt-4 border-t">
+                      <h4 className="font-medium mb-2">Danger Zone</h4>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() => {
+                          // TODO: Implement delete workspace functionality
+                          alert('Delete workspace functionality to be implemented');
+                        }}
+                      >
+                        Delete Workspace
+                      </Button>
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button type="button" onClick={handleClose}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={isLoading}>
+                        {isLoading ? <Spinner inline size={16} /> : 'Save Changes'}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              </TabsContent>
+            )}
           </Tabs>
         </DialogContent>
       </Dialog>
@@ -170,6 +172,8 @@ const WorkspaceSettingsModal = ({ isOpen, onOpenChange }: WorkspaceSettingsModal
         isOpen={isInviteModalOpen}
         onOpenChange={handleInviteModalClose}
       />
+    </>
+    : null
     </>
   );
 };
