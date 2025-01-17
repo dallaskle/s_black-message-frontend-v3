@@ -3,14 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { workspaceInviteApi } from '../../api/workspaceInvite';
 import { Button } from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
 
 const AcceptInvitePage = () => {
   const { workspaceId, token } = useParams<{ workspaceId: string; token: string }>();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const { refreshWorkspaces } = useWorkspace();
 
   useEffect(() => {
     const acceptInvite = async () => {
@@ -38,6 +36,17 @@ const AcceptInvitePage = () => {
       <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
         <Spinner size={32} />
         <p>Accepting invitation...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
+        <p className="text-red-500 text-lg font-semibold">Error: {error}</p>
+        <Button onClick={() => navigate('/')}>
+          Return to Home
+        </Button>
       </div>
     );
   }
