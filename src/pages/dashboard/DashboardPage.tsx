@@ -20,6 +20,7 @@ import { useClone } from '../../contexts/Clone/CloneContext';
 import { CloneProvider } from '../../contexts/Clone/CloneContext';
 import WorkspaceSettingsModal from '../../components/workspace/WorkspaceSettingsModal';
 import { getInviteUrl, clearInviteUrl } from '../../utils/inviteStorage';
+import AddWorkspaceModal from '../../components/workspace/AddWorkspaceModal';
 
 // Create a separate header component for better organization
 function DashboardHeader() {
@@ -310,6 +311,11 @@ const DashboardContent = React.memo(() => {
         isOpen={showSettings}
         onOpenChange={setShowSettings}
       />
+
+      {showAddWorkspace && <AddWorkspaceModal 
+        isOpen={showAddWorkspace} 
+        onOpenChange={setShowAddWorkspace}
+      />}
     </>
   );
 });
