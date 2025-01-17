@@ -49,7 +49,7 @@ export function MentionSuggestions({
 
   return (
     <div
-      className="absolute z-50 w-64 max-h-48 overflow-y-auto bg-background-secondary rounded-lg shadow-lg border border-text-secondary/10"
+      className="mention-suggestions absolute z-50 w-64 max-h-48 overflow-y-auto bg-background-secondary rounded-lg shadow-lg border border-text-secondary/10"
       style={{
         bottom: '100%',
         left: position.left,

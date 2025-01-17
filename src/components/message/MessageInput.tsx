@@ -63,33 +63,40 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
 
   // Handle mention selection
   const handleMentionSelect = useCallback((clone: Clone) => {
+    console.log('handleMentionSelect called with clone:', clone);
     if (!inputRef.current) return;
-
+    console.log('inputRef.current:', inputRef.current);
     const caretPosition = inputRef.current.selectionStart || 0;
     const textBeforeCaret = content.substring(0, caretPosition);
     const atSymbolIndex = textBeforeCaret.lastIndexOf('@');
-    
+    console.log('atSymbolIndex:', atSymbolIndex);
     if (atSymbolIndex === -1) return;
 
     const newContent = 
       content.substring(0, atSymbolIndex) +
-      `@${clone.name}` +
+      `@${clone.name} ` +
       content.substring(caretPosition);
+
+    console.log('Mention selected:', clone.name); // Log the selected mention
+    console.log('New content after mention:', newContent); // Log the new content
 
     setContent(newContent);
     setShowMentions(false);
     setMentionQuery('');
 
-    // Focus back on input and place cursor after mention
+    // Focus back on input and place cursor after mention and space
     inputRef.current.focus();
-    const newCursorPosition = atSymbolIndex + clone.name.length + 1;
+    const newCursorPosition = atSymbolIndex + clone.name.length + 2; // +2 for @ and space
     inputRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
   }, [content]);
 
   // Close mentions when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (!inputRef.current?.contains(e.target as Node)) {
+      // Check if the click is on a mention suggestion
+      const target = e.target as HTMLElement;
+      const isMentionSuggestion = target.closest('.mention-suggestions');
+      if (!inputRef.current?.contains(e.target as Node) && !isMentionSuggestion) {
         setShowMentions(false);
       }
     };
