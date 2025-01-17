@@ -36,12 +36,12 @@ export function MentionSuggestions({
     span.textContent = textBeforeCaret.substring(0, atSymbolIndex);
     document.body.appendChild(span);
     
-    const left = rect.left + span.offsetWidth;
+    const left = span.offsetWidth;
     document.body.removeChild(span);
     
     return {
-      top: rect.top - 200, // Position above input
-      left,
+      top: -200, // Position above input
+      left: left + 8, // Add some padding
     };
   };
 
@@ -51,8 +51,9 @@ export function MentionSuggestions({
     <div
       className="absolute z-50 w-64 max-h-48 overflow-y-auto bg-background-secondary rounded-lg shadow-lg border border-text-secondary/10"
       style={{
-        top: position.top,
+        bottom: '100%',
         left: position.left,
+        marginBottom: '8px',
       }}
     >
       {isLoading ? (

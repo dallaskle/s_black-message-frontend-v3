@@ -20,10 +20,12 @@ export function useMentions(): UseMentionsResult {
 
   const searchMentions = useCallback(async (query: string) => {
     if (!query) {
+      console.log('Empty query, clearing suggestions');
       setSuggestions([]);
       return;
     }
 
+    console.log('Searching mentions for query:', query);
     setIsLoading(true);
     setError(null);
 
@@ -31,13 +33,16 @@ export function useMentions(): UseMentionsResult {
       // Use cloneApi to fetch clones
       const response = await cloneApi.listClones(currentWorkspace?.id);
       const clones = response.data as Clone[];
+      console.log('Fetched clones:', clones.length, 'total clones');
 
       // Filter and sort clones based on query
       const filteredClones = clones
-        .filter((clone: Clone) => 
-          clone.name.toLowerCase().includes(query.toLowerCase()) &&
-          (clone.visibility === 'global' || clone.workspace_id === currentWorkspace?.id)
-        )
+        .filter((clone: Clone) => {
+          const matches = clone.name.toLowerCase().includes(query.toLowerCase());
+          const isVisible = clone.visibility === 'global' || clone.workspace_id === currentWorkspace?.id;
+          console.log(`Clone ${clone.name}: matches=${matches}, visible=${isVisible}`);
+          return matches && isVisible;
+        })
         .sort((a: Clone, b: Clone) => {
           // Sort workspace clones before global ones
           if (a.workspace_id === currentWorkspace?.id && b.visibility === 'global') return -1;
@@ -45,25 +50,30 @@ export function useMentions(): UseMentionsResult {
           return a.name.localeCompare(b.name);
         });
 
+      console.log('Filtered suggestions:', filteredClones.map(c => ({ name: c.name, visibility: c.visibility })));
       setSuggestions(filteredClones);
     } catch (err) {
+      console.error('Error fetching clone suggestions:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch clone suggestions');
     } finally {
       setIsLoading(false);
     }
   }, [currentWorkspace?.id]);
 
-  // Format message content to include clone IDs
   const formatMessageWithMentions = useCallback((content: string) => {
-    return content.replace(/@(\w+)/g, (match, name) => {
+    const formattedContent = content.replace(/@(\w+)/g, (match, name) => {
       const clone = suggestions.find(c => c.name.toLowerCase() === name.toLowerCase());
+      console.log(`Formatting mention: ${name}`, clone ? `-> ID: ${clone.id}` : '(no match found)');
       return clone ? `@${name}[id:${clone.id}]` : match;
     });
+    console.log('Formatted content:', formattedContent);
+    return formattedContent;
   }, [suggestions]);
 
-  // Extract visible content (hide clone IDs)
   const extractVisibleContent = useCallback((content: string) => {
-    return content.replace(/@(\w+)\[id:[^\]]+\]/g, '@$1');
+    const visibleContent = content.replace(/@(\w+)\[id:[^\]]+\]/g, '@$1');
+    console.log('Extracted visible content:', visibleContent);
+    return visibleContent;
   }, []);
 
   return {

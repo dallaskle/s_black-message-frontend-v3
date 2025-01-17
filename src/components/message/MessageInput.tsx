@@ -47,15 +47,14 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
 
     if (atSymbolIndex !== -1 && atSymbolIndex < caretPosition) {
       const query = textBeforeCaret.substring(atSymbolIndex + 1);
-      if (query !== mentionQuery) {
-        setMentionQuery(query);
-        searchMentions(query);
-        setShowMentions(true);
-      }
+      // Show suggestions immediately after @ and update as user types
+      setMentionQuery(query);
+      searchMentions(query);
+      setShowMentions(true);
     } else {
       setShowMentions(false);
     }
-  }, [mentionQuery, searchMentions]);
+  }, [searchMentions]);
 
   // Handle mention selection
   const handleMentionSelect = useCallback((clone: Clone) => {
@@ -74,6 +73,7 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
 
     setContent(newContent);
     setShowMentions(false);
+    setMentionQuery('');
 
     // Focus back on input and place cursor after mention
     inputRef.current.focus();
