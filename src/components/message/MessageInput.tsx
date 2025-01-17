@@ -47,6 +47,11 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
 
     if (atSymbolIndex !== -1 && atSymbolIndex < caretPosition) {
       const query = textBeforeCaret.substring(atSymbolIndex + 1);
+      // Hide suggestions if there's a space in the query
+      if (query.includes(' ')) {
+        setShowMentions(false);
+        return;
+      }
       // Show suggestions immediately after @ and update as user types
       setMentionQuery(query);
       searchMentions(query);
