@@ -12,7 +12,7 @@ import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
 import { useRealtimeReactions } from '../../hooks/useRealtimeReactions';
 import { MemberProvider } from '../../contexts/Member/MemberContext';
 import { MembersSidebar } from '../../components/members/MembersSidebar';
-import { Users, Settings } from 'lucide-react';
+import { Users, Settings, Search } from 'lucide-react';
 import { useMemberContext } from '../../contexts/Member/MemberContext';
 import { CloneList } from '../../components/clones/management/CloneList/CloneList';
 import { CloneChat } from '../../components/clones/chat/CloneChat/CloneChat';
@@ -21,10 +21,41 @@ import { CloneProvider } from '../../contexts/Clone/CloneContext';
 import WorkspaceSettingsModal from '../../components/workspace/WorkspaceSettingsModal';
 import { getInviteUrl, clearInviteUrl } from '../../utils/inviteStorage';
 import AddWorkspaceModal from '../../components/workspace/AddWorkspaceModal';
+import { SearchInput } from '../../components/search/SearchInput';
+import { SearchModal } from '../../components/search/SearchModal';
+import aiApi from '../../api/ai';
+import type { MessageSearchResponse } from '../../api/ai';
 
 // Create a separate header component for better organization
-function DashboardHeader() {
+function DashboardHeader({ showMembers, setShowMembers }: { showMembers: boolean; setShowMembers: (show: boolean) => void }) {
   const { currentWorkspace, currentChannel } = useWorkspace();
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [searchResult, setSearchResult] = useState<MessageSearchResponse | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const { workspaceMembers, channelMembers } = useMemberContext();
+  const { isAdmin } = useWorkspace();
+
+  const handleSearch = async (query: string) => {
+    if (!currentWorkspace) return;
+
+    setIsSearching(true);
+    setSearchError(null);
+    
+    try {
+      const result = await aiApi.searchMessages({
+        workspace_id: currentWorkspace.id,
+        channel_id: currentChannel?.id,
+        query
+      });
+      setSearchResult(result);
+    } catch (err: any) {
+      setSearchError(err.response?.data?.message || 'Failed to search messages');
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const getHeaderTitle = () => {
     if (currentChannel) {
@@ -57,12 +88,64 @@ function DashboardHeader() {
     );
   };
 
+  const memberCount = currentChannel?.id 
+    ? channelMembers[currentChannel.id]?.length ?? 0
+    : currentWorkspace?.id
+    ? workspaceMembers[currentWorkspace.id]?.length ?? 0
+    : 0;
+
   return (
-    <div className="p-4 border-b border-text-secondary/10">
-      <div className="flex justify-between items-center">
-        {getHeaderTitle()}
+    <>
+      <div className="flex items-center justify-between w-full px-4 py-2 border-b border-text-secondary/10">
+        <div className="flex items-center gap-4">
+          {getHeaderTitle()}
+          {currentWorkspace && (
+            <button
+              onClick={() => setShowSearchModal(true)}
+              className="p-2 hover:bg-background-secondary rounded-md text-text-secondary hover:text-text-primary"
+            >
+              <Search className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {currentWorkspace && isAdmin && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowSettings(true)}
+              className="h-8 w-8 p-0"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          )}
+          {(currentWorkspace || currentChannel) && (
+            <Button
+              variant="secondary"
+              onClick={() => setShowMembers(!showMembers)}
+              className="flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              {showMembers ? 'Hide Members' : `Show Members (${memberCount})`}
+            </Button>
+          )}
+        </div>
       </div>
-    </div>
+
+      <SearchModal
+        isOpen={showSearchModal}
+        onOpenChange={setShowSearchModal}
+        isLoading={isSearching}
+        error={searchError}
+        searchResult={searchResult}
+        onSearch={handleSearch}
+      />
+
+      <WorkspaceSettingsModal
+        isOpen={showSettings}
+        onOpenChange={setShowSettings}
+      />
+    </>
   );
 }
 
@@ -263,33 +346,7 @@ const DashboardContent = React.memo(() => {
           ) : (
             // Regular Messages View
             <>
-              <div className="flex items-center justify-between px-4 py-2 border-b border-text-secondary/10">
-                <div className="flex items-center gap-4">
-                  <DashboardHeader />
-                </div>
-                <div className="flex items-center gap-2">
-                  {currentWorkspace && isAdmin && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setShowSettings(true)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {(currentWorkspace || currentChannel) && (
-                    <Button
-                      variant="secondary"
-                      onClick={() => setShowMembers(!showMembers)}
-                      className="flex items-center gap-2"
-                    >
-                      <Users className="h-4 w-4" />
-                      {showMembers ? 'Hide Members' : `Show Members (${memberCount})`}
-                    </Button>
-                  )}
-                </div>
-              </div>
+              <DashboardHeader showMembers={showMembers} setShowMembers={setShowMembers} />
               <MessageList />
             </>
           )}
