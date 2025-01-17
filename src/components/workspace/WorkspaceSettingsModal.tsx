@@ -23,7 +23,6 @@ const WorkspaceSettingsModal = ({ isOpen, onOpenChange }: WorkspaceSettingsModal
   const [workspaceUrl, setWorkspaceUrl] = useState(currentWorkspace?.workspace_url || '');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
 
   if (!currentWorkspace) return null;
 
@@ -47,7 +46,6 @@ const WorkspaceSettingsModal = ({ isOpen, onOpenChange }: WorkspaceSettingsModal
       };
       
       updateWorkspace(updatedWorkspace);
-      setIsSuccess(true);
       setIsLoading(false);
       
       // Auto close after success
@@ -64,7 +62,6 @@ const WorkspaceSettingsModal = ({ isOpen, onOpenChange }: WorkspaceSettingsModal
     if (!isLoading) {
       onOpenChange(false);
       setError(null);
-      setIsSuccess(false);
       // Reset form to current workspace values
       if (currentWorkspace) {
         setName(currentWorkspace.name);

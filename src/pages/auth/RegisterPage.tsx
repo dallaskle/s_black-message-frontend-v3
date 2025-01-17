@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/Button';
 import S_Black_Full_Logo from '../../../public/S_Black_Full_Logo.png';
-import { getInviteUrl, clearInviteUrl } from '../../utils/inviteStorage';
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),

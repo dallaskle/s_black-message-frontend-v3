@@ -4,18 +4,15 @@ import { workspaceInviteApi } from '../../api/workspaceInvite';
 import { Button } from '../ui/Button';
 import Spinner from '../ui/Spinner';
 import { useAuth } from '../../contexts/AuthContext';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { saveInviteUrl, getInviteUrl } from '../../utils/inviteStorage';
 
 const AcceptInvite = () => {
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
   const { workspaceId, token } = useParams<{ workspaceId: string; token: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
-  const { refreshWorkspaces } = useWorkspace();
 
   useEffect(() => {
     console.log('🔄 AcceptInvite mounted/updated', {
@@ -49,7 +46,6 @@ const AcceptInvite = () => {
       navigate(`/login`);
     } else {
       console.log('👤 User is authenticated, ready to accept invite', { userId: user?.id });
-      setIsLoading(false);
     }
   }, [isAuthenticated, navigate, location, workspaceId, token, user]);
 
