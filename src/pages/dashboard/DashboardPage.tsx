@@ -18,7 +18,6 @@ import { CloneList } from '../../components/clones/management/CloneList/CloneLis
 import { CloneChat } from '../../components/clones/chat/CloneChat/CloneChat';
 import { useClone } from '../../contexts/Clone/CloneContext';
 import { CloneProvider } from '../../contexts/Clone/CloneContext';
-import AddWorkspaceModal from '../../components/workspace/AddWorkspaceModal';
 import WorkspaceSettingsModal from '../../components/workspace/WorkspaceSettingsModal';
 import { getInviteUrl, clearInviteUrl } from '../../utils/inviteStorage';
 

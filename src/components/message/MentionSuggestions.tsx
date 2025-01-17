@@ -21,7 +21,6 @@ export function MentionSuggestions({
   const getPosition = () => {
     if (!inputRef.current) return { top: 0, left: 0 };
     
-    const rect = inputRef.current.getBoundingClientRect();
     const caretPosition = inputRef.current.selectionStart || 0;
     const textBeforeCaret = inputRef.current.value.substring(0, caretPosition);
     const atSymbolIndex = textBeforeCaret.lastIndexOf('@');

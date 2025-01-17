@@ -26,7 +26,6 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
   const { currentWorkspace } = useWorkspace();
   const inputRef = useRef<HTMLInputElement>(null);
   const [showMentions, setShowMentions] = useState(false);
-  const [mentionQuery, setMentionQuery] = useState('');
   const {
     suggestions,
     isLoading: loadingMentions,
@@ -53,7 +52,6 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
         return;
       }
       // Show suggestions immediately after @ and update as user types
-      setMentionQuery(query);
       searchMentions(query);
       setShowMentions(true);
     } else {
@@ -82,7 +80,6 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
 
     setContent(newContent);
     setShowMentions(false);
-    setMentionQuery('');
 
     // Focus back on input and place cursor after mention and space
     inputRef.current.focus();
