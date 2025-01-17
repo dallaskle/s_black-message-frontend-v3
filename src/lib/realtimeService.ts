@@ -14,6 +14,11 @@ type ReactionCallback = (payload: {
   reaction: Reaction;
 }) => void;
 
+type CloneMessageCallback = (payload: {
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+  message: Message;
+}) => void;
+
 export class RealtimeService {
   private subscriptions: Record<string, any> = {};
 
@@ -179,9 +184,95 @@ export class RealtimeService {
       });
   }
 
+  subscribeToCloneMessages(channelId: string, callback: CloneMessageCallback) {
+    const key = `clone_messages:${channelId}`;
+    console.log('Setting up clone message subscription for channel:', channelId);
+    
+    if (this.subscriptions[key]) {
+      console.log('Clone message subscription already exists for channel:', channelId);
+      return;
+    }
+
+    this.subscriptions[key] = supabase
+      .channel('clone_messages_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'clone_messages',
+          filter: `channel_id=eq.${channelId}`,
+        },
+        async (payload: RealtimePostgresChangesPayload<Message & { clone_id: string }>) => {
+          try {
+            console.log('Received clone message event:', {
+              type: payload.eventType,
+              new: payload.new,
+              old: payload.old
+            });
+
+            if (!payload.new || !('clone_id' in payload.new)) {
+              console.log('Invalid clone message payload:', payload);
+              return;
+            }
+            
+            console.log('Fetching additional clone message data for:', payload.new.id);
+            // Fetch complete message data including any additional fields
+            const [messageData, cloneData] = await Promise.all([
+              supabase
+                .from('clone_messages')
+                .select('*')
+                .eq('id', payload.new.id)
+                .single()
+                .then(res => res.data),
+              supabase
+                .from('clones')
+                .select('name')
+                .eq('id', payload.new.clone_id)
+                .single()
+                .then(res => res.data)
+            ]);
+
+            const messageWithDetails = {
+              ...messageData,
+              name: cloneData?.name || 'AI Assistant', // Use clone's name with fallback
+              files: [], // Clone messages likely won't have files
+              reactions: {},
+              userReactions: [],
+              is_clone_message: true,
+              show_in_main_list: true, // Special flag for realtime clone messages
+              // Keep parent_message_id if it exists, but don't let it prevent showing in main list
+              _original_parent_message_id: messageData?.parent_message_id,
+              parent_message_id: undefined // Temporarily unset to show in main list
+            } as Message;
+
+            callback({
+              eventType: payload.eventType,
+              message: messageWithDetails,
+            });
+          } catch (error) {
+            console.error('Error processing clone message change:', error);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log(`Clone message subscription status for channel ${channelId}:`, status);
+        if (status === 'SUBSCRIBED') {
+          console.log(`Subscribed to clone messages for channel ${channelId}`);
+        } else if (status === 'CLOSED') {
+          console.log(`Subscription closed for clone messages in channel ${channelId}`);
+          delete this.subscriptions[key];
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error(`Error in clone message subscription for channel ${channelId}`);
+          this.unsubscribe(channelId);
+        }
+      });
+  }
+
   unsubscribe(channelId: string) {
     const messagesSub = this.subscriptions[`messages:${channelId}`];
     const reactionsSub = this.subscriptions[`reactions:${channelId}`];
+    const cloneMessagesSub = this.subscriptions[`clone_messages:${channelId}`];
 
     if (messagesSub) {
       supabase.removeChannel(messagesSub);
@@ -191,6 +282,11 @@ export class RealtimeService {
     if (reactionsSub) {
       supabase.removeChannel(reactionsSub);
       delete this.subscriptions[`reactions:${channelId}`];
+    }
+
+    if (cloneMessagesSub) {
+      supabase.removeChannel(cloneMessagesSub);
+      delete this.subscriptions[`clone_messages:${channelId}`];
     }
   }
 

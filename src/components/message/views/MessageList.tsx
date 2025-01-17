@@ -40,7 +40,12 @@ export function MessageList() {
 
   // Filter out messages that are replies
   const parentMessages = useMemo(() => {
-    return messages.filter(message => !message.parent_message_id);
+    return messages.filter(message => 
+      // Include messages without parent_message_id
+      !message.parent_message_id || 
+      // Or include realtime clone messages marked to show in main list
+      (message.is_clone_message && message.show_in_main_list)
+    );
   }, [messages]);
 
   // Group and sort messages
