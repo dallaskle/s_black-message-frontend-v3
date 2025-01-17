@@ -21,7 +21,6 @@ import { CloneProvider } from '../../contexts/Clone/CloneContext';
 import WorkspaceSettingsModal from '../../components/workspace/WorkspaceSettingsModal';
 import { getInviteUrl, clearInviteUrl } from '../../utils/inviteStorage';
 import AddWorkspaceModal from '../../components/workspace/AddWorkspaceModal';
-import { SearchInput } from '../../components/search/SearchInput';
 import { SearchModal } from '../../components/search/SearchModal';
 import aiApi from '../../api/ai';
 import type { MessageSearchResponse } from '../../api/ai';
@@ -191,7 +190,7 @@ const DashboardContent = React.memo(() => {
   const [showMembers, setShowMembers] = useState(false);
   const [showAddWorkspace, setShowAddWorkspace] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const { currentWorkspace, currentChannel, workspaces, isLoading: workspacesLoading, isAdmin } = useWorkspace();
+  const { currentWorkspace, currentChannel, workspaces, isLoading: workspacesLoading } = useWorkspace();
   const { workspaceMembers, channelMembers, fetchWorkspaceMembers, fetchChannelMembers } = useMemberContext();
   const { state: cloneState } = useClone();
   const [showClones, setShowClones] = useState(false);
@@ -217,12 +216,6 @@ const DashboardContent = React.memo(() => {
       fetchWorkspaceMembers(currentWorkspace.id);
     }
   }, [currentWorkspace?.id, fetchWorkspaceMembers]);
-
-  const memberCount = currentChannel?.id 
-    ? channelMembers[currentChannel.id]?.length ?? 0
-    : currentWorkspace?.id
-    ? workspaceMembers[currentWorkspace.id]?.length ?? 0
-    : 0;
 
   if (workspacesLoading) {
     return (
