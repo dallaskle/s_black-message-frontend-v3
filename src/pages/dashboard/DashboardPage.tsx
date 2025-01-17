@@ -305,10 +305,7 @@ const DashboardContent = React.memo(() => {
         )}
       </div>
 
-      <AddWorkspaceModal 
-        isOpen={showAddWorkspace} 
-        onOpenChange={setShowAddWorkspace}
-      />
+      
 
       <WorkspaceSettingsModal
         isOpen={showSettings}
@@ -327,9 +324,7 @@ export function DashboardPage() {
     // Check for saved invite URL when dashboard mounts and user is authenticated
     if (user) {
       const savedInviteUrl = getInviteUrl();
-      console.log('🔍 Checking for saved invite URL on dashboard:', savedInviteUrl);
       if (savedInviteUrl) {
-        console.log('➡️ Redirecting to saved invite URL from dashboard:', savedInviteUrl);
         clearInviteUrl();
         navigate(savedInviteUrl);
       }

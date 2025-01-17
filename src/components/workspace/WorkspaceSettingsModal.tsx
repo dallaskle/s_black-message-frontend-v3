@@ -78,7 +78,6 @@ const WorkspaceSettingsModal = ({ isOpen, onOpenChange }: WorkspaceSettingsModal
   };
 
   return (
-    <> isAdmin ?
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[600px] bg-background-primary">
@@ -104,73 +103,49 @@ const WorkspaceSettingsModal = ({ isOpen, onOpenChange }: WorkspaceSettingsModal
             </TabsContent>
 
             {isAdmin && (
-              <TabsContent value="settings">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Workspace Settings</h3>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {error && (
-                      <div className="text-red-500 text-sm p-2 bg-red-50 rounded">
-                        {error}
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Workspace Name</Label>
-                      <Input
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Enter workspace name"
-                        required
-                      />
+              <TabsContent value="settings" className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {error && (
+                    <div className="text-red-500 text-sm p-2 bg-red-50 rounded">
+                      {error}
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="workspaceUrl">Workspace URL</Label>
-                      <Input
-                        id="workspaceUrl"
-                        value={workspaceUrl}
-                        onChange={(e) => setWorkspaceUrl(e.target.value)}
-                        placeholder="Enter workspace URL"
-                        required
-                      />
-                      <p className="text-sm text-gray-500">
-                        This URL will be used for workspace access and sharing
-                      </p>
-                    </div>
-                    <div className="pt-4 border-t">
-                      <h4 className="font-medium mb-2">Danger Zone</h4>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() => {
-                          // TODO: Implement delete workspace functionality
-                          alert('Delete workspace functionality to be implemented');
-                        }}
-                      >
-                        Delete Workspace
-                      </Button>
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button type="button" onClick={handleClose}>
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={isLoading}>
-                        {isLoading ? <Spinner inline size={16} /> : 'Save Changes'}
-                      </Button>
-                    </div>
-                  </form>
-                </div>
+                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Workspace Name</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Enter workspace name"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="url">Workspace URL</Label>
+                    <Input
+                      id="url"
+                      value={workspaceUrl}
+                      onChange={(e) => setWorkspaceUrl(e.target.value)}
+                      placeholder="Enter workspace URL"
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? <Spinner inline size={16} /> : 'Save Changes'}
+                    </Button>
+                  </div>
+                </form>
               </TabsContent>
             )}
           </Tabs>
         </DialogContent>
       </Dialog>
 
-      <InviteMemberModal
-        isOpen={isInviteModalOpen}
+      <InviteMemberModal 
+        isOpen={isInviteModalOpen} 
         onOpenChange={handleInviteModalClose}
       />
-    </>
-    : null
     </>
   );
 };
