@@ -3,6 +3,7 @@ import { useMessage } from '../../contexts/Message/MessageContext';
 import type { Message } from '../../types/message';
 import { FileData } from '../../types/file';
 import { useAuth } from '../../contexts/AuthContext';
+import { useMentions } from '../../hooks/useMentions';
 
 // Common emojis for quick reactions
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '🤔', '👀'];
@@ -19,6 +20,7 @@ export function Message({ message, onThreadClick, isInThread }: MessageProps) {
   const [editContent, setEditContent] = useState(message.content);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const { user } = useAuth();
+  const { extractVisibleContent } = useMentions();
 
   const handleUpdate = async () => {
     try {
@@ -196,6 +198,21 @@ export function Message({ message, onThreadClick, isInThread }: MessageProps) {
     return user?.id === message.user_id;
   }, [user?.id, message.user_id]);
 
+  // Format message content with highlighted mentions
+  const formatContent = (content: string) => {
+    const visibleContent = extractVisibleContent(content);
+    return visibleContent.split(/(@\w+)/).map((part, index) => {
+      if (part.startsWith('@')) {
+        return (
+          <span key={index} className="text-accent-primary font-medium">
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
   if (isEditing) {
     return (
       <div className="group px-4 py-2 hover:bg-background-secondary">
@@ -257,7 +274,9 @@ export function Message({ message, onThreadClick, isInThread }: MessageProps) {
           )}
         </div>
       </div>
-      <p className="mt-1 text-text-primary whitespace-pre-wrap font-thin">{message.content}</p>
+      <p className="mt-1 text-text-primary whitespace-pre-wrap font-thin">
+        {formatContent(message.content)}
+      </p>
       
       {/* Add files display */}
       {renderFiles(message.files)}

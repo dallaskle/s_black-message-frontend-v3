@@ -1,8 +1,11 @@
-import { useState, FormEvent, useRef } from 'react';
+import { useState, FormEvent, useRef, useEffect, useCallback } from 'react';
 import { useMessage } from '../../contexts/Message/MessageContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { FileUploadButton } from '../file/FileUploadButton';
 import { FileUploadProgress } from '../file/FileUploadProgress';
+import { useMentions } from '../../hooks/useMentions';
+import { Clone } from '../../types/clone';
+import { MentionSuggestions } from './MentionSuggestions';
 
 interface MessageInputProps {
   parentMessageId?: string;
@@ -22,6 +25,85 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
   const { sendMessage } = useMessage();
   const { currentWorkspace } = useWorkspace();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const {
+    suggestions,
+    isLoading: loadingMentions,
+    error: mentionsError,
+    searchMentions,
+    formatMessageWithMentions,
+  } = useMentions();
+
+  // Handle content changes and mention detection
+  const handleContentChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newContent = e.target.value;
+    setContent(newContent);
+
+    // Check for mention trigger
+    const caretPosition = e.target.selectionStart || 0;
+    const textBeforeCaret = newContent.substring(0, caretPosition);
+    const atSymbolIndex = textBeforeCaret.lastIndexOf('@');
+
+    if (atSymbolIndex !== -1 && atSymbolIndex < caretPosition) {
+      const query = textBeforeCaret.substring(atSymbolIndex + 1);
+      // Hide suggestions if there's a space in the query
+      if (query.includes(' ')) {
+        setShowMentions(false);
+        return;
+      }
+      // Show suggestions immediately after @ and update as user types
+      setMentionQuery(query);
+      searchMentions(query);
+      setShowMentions(true);
+    } else {
+      setShowMentions(false);
+    }
+  }, [searchMentions]);
+
+  // Handle mention selection
+  const handleMentionSelect = useCallback((clone: Clone) => {
+    console.log('handleMentionSelect called with clone:', clone);
+    if (!inputRef.current) return;
+    console.log('inputRef.current:', inputRef.current);
+    const caretPosition = inputRef.current.selectionStart || 0;
+    const textBeforeCaret = content.substring(0, caretPosition);
+    const atSymbolIndex = textBeforeCaret.lastIndexOf('@');
+    console.log('atSymbolIndex:', atSymbolIndex);
+    if (atSymbolIndex === -1) return;
+
+    const newContent = 
+      content.substring(0, atSymbolIndex) +
+      `@${clone.name} ` +
+      content.substring(caretPosition);
+
+    console.log('Mention selected:', clone.name); // Log the selected mention
+    console.log('New content after mention:', newContent); // Log the new content
+
+    setContent(newContent);
+    setShowMentions(false);
+    setMentionQuery('');
+
+    // Focus back on input and place cursor after mention and space
+    inputRef.current.focus();
+    const newCursorPosition = atSymbolIndex + clone.name.length + 2; // +2 for @ and space
+    inputRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+  }, [content]);
+
+  // Close mentions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      // Check if the click is on a mention suggestion
+      const target = e.target as HTMLElement;
+      const isMentionSuggestion = target.closest('.mention-suggestions');
+      if (!inputRef.current?.contains(e.target as Node) && !isMentionSuggestion) {
+        setShowMentions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleFileSelect = async (file: File) => {
     setUploadingFile({ file, progress: 0 });
@@ -41,9 +123,11 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
     if ((!content.trim() && !uploadingFile) || !currentWorkspace) return;
 
     try {
-      // Send message with or without file
+      // Format message with mention IDs before sending
+      const formattedContent = formatMessageWithMentions(content);
+
       await sendMessage(
-        content,
+        formattedContent,
         uploadingFile?.file,
         uploadingFile ? (progress) => {
           setUploadingFile(prev => prev ? { ...prev, progress } : null);
@@ -51,13 +135,11 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
         parentMessageId
       );
 
-      // Clear state after successful send
       setContent('');
       setUploadingFile(null);
       if (onMessageSent) {
         onMessageSent();
       }
-      // Focus back on input after sending
       inputRef.current?.focus();
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Failed to send message';
@@ -92,22 +174,33 @@ export function MessageInput({ parentMessageId, isThread = false, onMessageSent 
             disabled={!!uploadingFile}
           />
         </div>
-        <input
-          ref={inputRef}
-          type="text"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey && (content.trim() || uploadingFile?.progress === 100)) {
-              e.preventDefault();
-              handleSubmit(e);
-            }
-          }}
-          placeholder={isThread ? 'Reply in thread...' : `Message #${currentWorkspace.name}`}
-          className="flex-1 bg-background-primary border border-text-secondary/20 rounded-lg 
-            px-4 py-2 text-text-primary placeholder:text-text-secondary focus:outline-none 
-            focus:border-accent-primary"
-        />
+        <div className="relative flex-1">
+          <input
+            ref={inputRef}
+            type="text"
+            value={content}
+            onChange={handleContentChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey && (content.trim() || uploadingFile?.progress === 100)) {
+                e.preventDefault();
+                handleSubmit(e);
+              }
+            }}
+            placeholder={isThread ? 'Reply in thread...' : `Message #${currentWorkspace.name}`}
+            className="w-full bg-background-primary border border-text-secondary/20 rounded-lg 
+              px-4 py-2 text-text-primary placeholder:text-text-secondary focus:outline-none 
+              focus:border-accent-primary"
+          />
+          {showMentions && (
+            <MentionSuggestions
+              suggestions={suggestions}
+              isLoading={loadingMentions}
+              error={mentionsError}
+              onSelect={handleMentionSelect}
+              inputRef={inputRef}
+            />
+          )}
+        </div>
         <button
           type="submit"
           disabled={!content.trim() && !uploadingFile?.file}

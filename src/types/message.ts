@@ -14,6 +14,9 @@ export interface Message {
   files?: FileData[];
   replies?: Message[];
   status: MessageStatus;
+  is_clone_message?: boolean;
+  show_in_main_list?: boolean;
+  _original_parent_message_id?: string | null;
 } 
 
 export enum MessageStatus {
